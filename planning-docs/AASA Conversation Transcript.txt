@@ -1,0 +1,576 @@
+﻿​​Tammy
+02:59
+So we had sent you a few things that the team's been talking about. I don't know if you had a chance to look at them, Christian.
+Christian
+03:09
+Let me—and you emailed them over, right, Tammy?
+Unknown speaker
+03:12
+I did.
+Christian
+03:14
+Maybe I'll pull it back up right now.
+Christian
+03:29
+This right here. Let me make sure I'm on the same.
+Christian
+03:34
+It's the tax, that's keyword taxonomy, and the AI lead scoring methodology, right?
+Tammy
+03:44
+Todd, I don't know if you want to talk about it.
+Todd
+03:50
+Yeah, sure. I just put together an outline and kind of just put down on paper what we talked about in Tammy's office that day. So I didn't go much deeper than that. Thought we could just float it past you, use it as a discussion document because we have it on paper, and so that would let us guide the discussion. So really what we were thinking is, first and foremost, we've got to get a master list of all the districts, their websites, all those types of things, and whether that's downloading it from NCE as a starting point or what, there's that.
+Todd
+04:25
+And then it went through the idea of, okay, if we're going to take all of those districts and scrape their websites and social media, what are we going to look for? Where are we going to look for this stuff?
+Todd
+04:36
+And what categories are we going to look for? So we were really thinking through how we might do that. So it really kind of starts—
+Todd
+04:46
+The categories for scoring, the first category is what we are looking for.
+Todd
+04:51
+And then the second part of it is really the outreach and scoring plan. This is really where the system, method, and process comes to play.
+Todd
+05:01
+Really the data assembly is the first step—how do we bring all this stuff together and create a comprehensive database that we can load into our CRM, we can load into Salesforce. We've probably got most districts, but probably not all. So how do we make sure that we do have all, so that gap between what we have and what's out there is kind of one of the first tasks.
+Todd
+05:22
+And then filling in other data that's useful to us. So out of the NCS data, things like grade served, the locale code, the website, social media.
+Todd
+05:38
+The superintendent is hard to get at because it's usually outdated, so that one is usually a bad field until you actually go to the district website and find the real superintendent. But for percent free and reduced lunch and percent minority, those are flags for us, especially as we go to grant applications. We bring schools in because many of the competitive grant applications will have priority requirements for greater than 70% free and reduced lunch, greater than 60% minority, whatever their criteria may be.
+Todd
+06:11
+We need to be able to select from our databases what that is readily and easily, to where we can target potential districts for a consortium for a grant application, something along those lines. Does that make sense so far?
+Christian
+06:24
+No, it does.
+Christian
+06:28
+In the current layout of the groupings for those districts, the percent of just for free and reduced lunch, in the categories they shift state by state, correct, or are we going to go off the federal—what has been historically the federal basis for those rankings?
+Todd
+06:46
+So things like the NCS locale code doesn't change, and if you're competing for federal grants, you just have to cite a trusted source.
+Todd
+06:58
+And so one of the easiest trusted sources to always cite is NCES, even though it's usually a little stale, a little outdated. If you cite NCS as your source—
+Todd
+07:07
+And you use the data that's available in CS, that's defensible in your grant application.
+Christian
+07:13
+Okay.
+Todd
+07:14
+It doesn't necessarily mean it's true. It just means it's verifiable.
+Christian
+07:18
+That makes a ton of sense. Okay.
+Todd
+07:20
+Right. Because these numbers do flip and change, and the state data is usually a little bit more up to date.
+Todd
+07:28
+But as long as we have a verifiable data source, it gives us a place to start. Some of these flip, so if they're like 69% free and reduced lunch one year—
+Todd
+07:38
+On the NCS twice a year, they might be 75% the next year, and we can verify that. So we might miss some in our screening. And they might have been 75% one year and 69% the next year. So if we identify some, it's up to us to verify their current status.
+Todd
+07:55
+But it gives us a starting point to be able to query and swoop a group of incumbent districts that we might seek to do a grant application with. You can't usually apply for a grant that says, give us money.
+Todd
+08:07
+A bunch of money and let us sit on it and let us engage all these districts which we haven't identified yet.
+Todd
+08:13
+You usually have to have letters of support from those districts and you have to use those districts for the qualification for your case statement.
+Christian
+08:21
+Does AASA have a list of all of the state websites where this information is usually listed where you would go double check it? Like in my brain, I'm thinking,
+Christian
+08:31
+In a lot of my work I've been doing something similar for California districts, NCES is a source, EdData is another source.
+Christian
+08:38
+But then CDE, like the CDE site is where I go to find that exact superintendent.
+Christian
+08:44
+Do you have a list of like the 50 states' version of the CDE?
+Christian
+08:49
+Because I know probably not every state has that either.
+Tammy
+08:50
+I'm saying no.
+Todd
+08:52
+They do, almost every one of them. I built the Ohio one, it's called Oreds, so we built that back in the 90s. We were one of the first states to do so.
+Todd
+09:03
+And so Oreds is then hidden behind our safe account, which is our single sign-on account, which, again, I built in the 90s.
+Christian
+09:10
+Every time I talk to you, I just realize more and more that you're like the education tech godfather.
+Todd
+09:18
+Yeah, it's funny, Kristen, I actually, I'll email the paper to you. You inspired me to write a retrospective musings white paper on AI.
+Todd
+09:26
+Where you are in your life and where the country is in its technology and AI is where I was at your age on the Internet adoption.
+Todd
+09:37
+So you brought so many parallels.
+Todd
+09:40
+Back to my life that over the break I wrote a little musings of everything old is new again.
+Christian
+09:44
+That's really cool.
+Todd
+09:45
+I would love for you to read it and give me feedback about what you think, what your reactions are. But that's a whole different thing. I'll email that to you later.
+Christian
+09:53
+Perfect. Now that makes complete sense. Yeah, please do send that over. That'd be really cool to read.
+Todd
+10:03
+And so states do have them, many of them are guarded somewhat. They're not available for scraping so much because they know everybody
+Tammy
+10:12
+Do we have it? The answer is no, just for quantification.
+Christian
+10:17
+Got it.
+Christian
+10:19
+Okay.
+Todd
+10:20
+Yeah, I could find it for California, I know it for Ohio, but beyond that, we're probably grasping at straws.
+Christian
+10:27
+And it was O-Reds for Ohio, right?
+Christian
+10:32
+Okay, that's not a problem. That'll be
+Christian
+10:36
+That's probably not too difficult to pull down.
+Christian
+10:39
+So what my brain's thinking right now, tell me this is a bad idea, but in terms of getting
+Christian
+10:45
+Getting us a foundation of good database.
+Christian
+10:49
+We have the NCES and we have the CCD data.
+Christian
+10:53
+That's a foundational first start for obviously the district's list.
+Christian
+10:58
+We probably do a compare contrast from what you all have right now in your database to see if there's any gaps based on what you mentioned.
+Christian
+11:07
+From there,
+Christian
+11:09
+You do a next step, which is we're going to extract a lot of data from NCES down to just student demographics and taggings.
+Christian
+11:18
+Frame reduced lunch rankings categories. We'd probably then try to kick off an exploration
+Todd
+11:26
+We probably don't need it school by school, so district by district is probably
+Christian
+11:30
+Yeah, school by school would be
+Todd
+11:33
+That's a lot.
+Christian
+11:35
+I think I'd probably break two computers if we did that.
+Todd
+11:38
+Yeah, that's pretty insane.
+Christian
+11:39
+Yeah, that's the federal government needs to be, well, not the federal government anymore, but an entity paying a lot of money for that research.
+Todd
+11:46
+Somebody
+Christian
+11:49
+So we go district by district. I'm then thinking it would be worthwhile.
+Christian
+11:55
+Because to make sure that this data doesn't go stale for y'all, like think about long-term systems.
+Christian
+12:01
+If we could find those 50 state registries
+Christian
+12:05
+And build a script that just checks and just sees is this up to date, what needs to be updated
+Christian
+12:13
+And build just some sort of flag of this has changed, this has been updated, would you like me to update the database?
+Christian
+12:20
+And once we get that set, well, now you have all the school districts in the country. Are we targeting charters as well?
+Christian
+12:30
+Public charters only, right?
+Tammy
+12:32
+Public charters only.
+Christian
+12:33
+Okay, so public charters have been included.
+Christian
+12:37
+And then from there, we have to get into the scoring conversation, which seems a little bit more thought out, but like you all put a lot of thought into this. I would imagine looking at the functions and formulas in here
+Todd
+12:49
+Well, that was thanks to Copilot and me arguing back and forth with Copilot like I would one of my developers.
+Todd
+12:57
+It was actually a pretty funny interaction because remember when you were like, you don't have to be nice
+Christian
+13:03
+Yeah.
+Todd
+13:04
+I was like, all right, let me be a dick and let me just see what I get. And so
+Todd
+13:09
+So it was like, okay, now I can take out my angst on Copilot and I can be nice to Tammy and Jeff.
+Christian
+13:14
+See, not everybody's happy except for the computer.
+Tammy
+13:15
+Ha, ha, ha, ha.
+Todd
+13:18
+Correct.
+Christian
+13:22
+This right here.
+Christian
+13:25
+And I do apologize. I actually didn't get into the weeds of the formulas before we hopped on.
+Todd
+13:38
+Well, before we go deep into that, maybe take a step back on the process steps. First I had this idea of data assembly, like we have to start with something, then we have to go through this idea of how do we collect all the signals. And, you know, we've got district websites, social media, things like that that are more relevant because not everybody keeps their websites up to date.
+Todd
+14:01
+They're probably posting on X or something. So a lot of the activities that they're doing are going to be presented in probably both of those. So if I were scraping, I'd want this huge data lake of all this.
+Todd
+14:17
+Language that they're using and then looking for the underlying sentiment analysis of what are they talking about, where are they in their preparedness, where are they in their journey, and then my question became how do I score them in such a way
+Todd
+14:32
+That out of the 16,000 school districts that might be incumbent, I can give Jeff a hot sheet where he can start chipping away at the ones that rank the highest. Now, whether the ranking is perfect or whether the ranking is informative, it at least creates a ranking. Does that make sense?
+Christian
+14:49
+Complete sense.
+Todd
+14:51
+So usually a hot list, I tend to work a sales hot list as 3-10-20. Like what are the three you're working on that are the most hot? What are the next 10? What are the next 20? And if you roll through those, once you've rolled through your three, you keep rolling through those and you can get through 16,000.
+Todd
+15:09
+Not that I expect you have to get through 16,000. Tammy might, but I don't.
+Tammy
+15:14
+I crossed off a bunch to start.
+Todd
+15:20
+Yeah, let's start with some of the bigger ones.
+Christian
+15:23
+In terms of the data, so you said data lake.
+Christian
+15:31
+What are the sources, again, that you think would be the most valuable? It would be where they're actively posting the most. So that could be X, it could be LinkedIn, it could be their website, it could be Facebook. Are you taking any posts or are they particularly ones from the superintendent or principals?
+Todd
+15:50
+The superintendent doesn't always—I don't know if they would post in the superintendent's name or under a district account or the chief communications officer or somebody along those lines. I think it's at the district level, not the school level, because we're wanting to find the thematic sense of the district. There's always a school inside even big districts that do things that are lined up with us, but if it's not system-wide, it's a real challenge for us for sales.
+Jeff
+16:21
+If they are doing something from a big school, if it's a popular initiative, it'll be covered under the district.
+Jeff
+16:32
+Typically, yes.
+Christian
+16:34
+Got it. Okay.
+Christian
+16:36
+And then we're also going to be pulling down—
+Christian
+16:41
+Remember, this was one of the more complex pieces we were talking about, the strategic plan. So if it's listed anywhere, if it's embedded into the website, if it's a page, if it's a PDF.
+Christian
+16:51
+Have you all found anything more about what the usual or the—
+Christian
+16:57
+Preferred processes there or is that kind of still where we had the conversation in December?
+Todd
+17:07
+Some is going to be under "about," some is going to have that top line section on strategic plan, some is going to be buried.
+Todd
+17:10
+I think it's about as random as it gets.
+Todd
+17:15
+I don't think there's any one standard way to post or communicate a district strategic plan.
+Christian
+17:21
+Yeah, the categories for scoring an outreach piece that you put in here too is really helpful.
+Christian
+17:33
+Let me ask this for the key taxonomy and synonyms.
+Christian
+17:37
+Obviously, each of those main headers is a—
+Todd
+17:41
+Unless they only jump back and forth the documents for you.
+Christian
+17:44
+I'm on the key taxonomy and synonyms one.
+Christian
+17:48
+Where it says graduate, community, company of the strategic planning.
+Christian
+17:53
+Would we be searching for each of those headers like measure what matters, impact showcases? Really wanting to search when we do the initial—
+Christian
+18:03
+Looking for plans, portrait of a graduate, any along those lines. Would we be wanting to search for a lot of those terms to try to find if they have anything posted?
+Todd
+18:14
+Yeah, that's what I was thinking. Again, argue back with me on any of this—Jeff certainly did. But the signals that—let's use Portrait of a Graduate, for example—the core signal, exact words, right? And then what we wanted to look at is what are the synonyms and variants that we see? So if you don't use the word "portrait graduate," what are you using? We see things like "graduate profile," "future ready skills," "life skills," "how to success," things like that.
+Todd
+18:47
+The queue for the context—board agenda, strategic plan section, community engagement pages, social media, different things like that. Now, we do have things that are negatives or neutralizers to say, okay, if we get a hit on this, how do we know—are they talking about somebody else? Are they talking about the state or what are they doing, and so can we—
+Todd
+19:13
+Can we gain confidence in our scoring by using negatives and neutralizers?
+Christian
+19:18
+Got it, yeah.
+Todd
+19:22
+Because that tells us logically—
+Todd
+19:27
+Are they really talking about this or are they not really talking about this? Now, if you want to get really fancy, we could use lexicon analysis, sentiment analysis, subtext, all those types of analytical tools available through AI, but I thought it was easier just to punch down the scoring with a negative. So if you get five points for saying "portrait of a graduate"—
+Todd
+19:47
+And then it's like minus four points if it's referencing the state's portrait of a graduate or something along those lines, then it kind of mitigates our scoring.
+Christian
+19:55
+Yeah, the fairness and bias notes and the negative or dampening indicators are really helpful.
+Todd
+20:02
+Yeah, those were my long arguments with co-pilots.
+Christian
+20:02
+Okay.
+Christian
+20:06
+I can tell because the design thinking that went into this is very well thought out.
+Christian
+20:17
+Vendor mentions should not inflate scores unless explicitly tied to POG.
+Christian
+20:24
+That was a nitty-gritty argument.
+Todd
+20:30
+It was also me playing around with it, like not yelling at it, but you get it.
+Christian
+20:35
+In a dream scenario—
+Christian
+20:38
+How do the three of you interact with the final version of this and how often do you interact with it?
+Tammy
+20:44
+In a dream scenario, I never touch it.
+Christian
+20:47
+It operates by itself, Christian, and it does all the updating.
+Todd
+20:47
+In a dream scenario.
+Christian
+20:53
+And then we plug in some voice agents that make the phone calls for us.
+Todd
+20:56
+Yeah, so precision, fairy dust, magic happens, contract signed.
+Jeff
+21:06
+It's ideal.
+Tammy
+21:06
+No gentlemen, tell Christian your dream.
+Todd
+21:12
+With Jeff, I'll just speak for my seat. Jeff is charged with more of these direct outreach district service sales than I am. So there's a big part of it that's helpful for me in a different sense. I'm going to speak about it from a partner grant development perspective. I need a database I can query to find incumbent districts that might be likely to qualify or interested to partner with us on a pursuit—either a competitive grant or program, or as we design programs I can target better outreaches for engagement. Those are my underlying motives and interests.
+Christian
+21:55
+How would you serve?
+Todd
+21:57
+I would search for, let's say I've got a grant application that has priority points for novel measures of student measurement. So that "measure what matters" principle, which is principle five of the public education promise.
+Todd
+22:18
+I would want to look for things like application demonstration, evidence of learning, rubrics, things like that to see which districts are doing portrait of a graduate or something along those lines. That way I know they're doing skills work.
+Todd
+22:38
+And they're looking at measurements.
+Christian
+22:43
+Yeah, it does.
+Todd
+22:43
+Does that make sense?
+Todd
+22:45
+Okay. Now, I know.
+Christian
+22:46
+Would you search this romantically or would you filter?
+Todd
+22:52
+Good question. I think I could do syntactical filtering or semantical approaches, but I would probably—if we have a good solid base of this, a syntactical search would be just as easy as a semantical query.
+Christian
+23:05
+Yeah. Okay.
+Christian
+23:08
+That's helpful. Thank you. Because I wasn't thinking about that at all. I'm still just thinking about seeing if they have strategic plans or portraits of graduates or not.
+Jeff
+23:18
+Okay, so are—
+Todd
+23:19
+So I'm—
+Jeff
+23:20
+Are we looking to start or do you want me to explain mine?
+Todd
+23:22
+I was gonna say, I just know we just did a five minute warning. I think this was scheduled for 30 minutes.
+Todd
+23:29
+Christian, are you good to go over?
+Christian
+23:31
+I can go over, I have a 10:30.
+Christian
+23:36
+I have a 10th grade, and then I have to talk to a board at 10:45.
+Todd
+23:39
+Okay, just lightning round, go play.
+Jeff
+23:42
+Okay, so right now I'm trying to
+Jeff
+23:48
+meet up with districts at NCE who would be interested in our services.
+Jeff
+23:56
+I've got a list of all the people who are attending, the superintendents who are attending NCE. What I don't know is do they have a portrait of a graduate? I don't know what their interests are, so I have to go and do a lot of research on some of these before I go out and hit 1,600 different people. If I knew, I'd love to be able to either enter, here's some people that I know are going to be at this event, or the district name, and then just see which of them have a portrait of a graduate, so I could start to narrow down where I'm hunting.
+Jeff
+24:36
+So that would be an example for an event. It could also be, hey, outside of an event, I need to build up a pipeline of opportunities and I want to make sure I'm talking to the right people.
+Jeff
+24:45
+Warming them up and trying to connect with them, those types of things. So it's that type of effort rather than going to somebody just because they're a superintendent does not necessarily mean that introducing myself and I'm
+Jeff
+24:56
+interested in our services.
+Christian
+24:58
+Got it. I'm on the same page now. And the first thing that happened in my brain was, give me the weekend after this because it helped me color it in a lot.
+Christian
+25:09
+I'm going to try to literally build it. I'm going to fail. I'm going to get something though and I'll get somewhere.
+Christian
+25:17
+And then because I didn't know that the goal, Jeff, was for two weeks.
+Jeff
+25:25
+Well, it doesn't have to be. I'm just using that as an example of how I would use it if I had something right now.
+Christian
+25:31
+But it would be nice if you had it before NC.
+Jeff
+25:35
+Well, I tell you what, I'm sending stuff out to people now because I don't have any other way and I got to give them a little bit of heads up. But that's a good example of an ongoing week. There's an NCE every year. There's people who attend every year. Not every superintendent attends every year. I have a meeting room. So it's a great opportunity to meet up with people if they're interested.
+Christian
+25:59
+No, that's really helpful for me in terms of the interaction and how it would be utilized.
+Christian
+26:05
+Where I get really excited about this is
+Christian
+26:09
+even for me, it's a challenge in terms of can I build out a database
+Christian
+26:15
+of all the districts and public charters
+Christian
+26:18
+and see if this is something where they need that support on.
+Christian
+26:24
+If we're able to build it in a way, you said data lake, Todd.
+Christian
+26:32
+I built that internal CRM system, but I built it in a way where every single organization has its own context suite that the system itself learns so that as I do professional development and surveys I start to basically build up a knowledge base. It's like if I start to work with the state associations I can start to say, hey, here's what all your districts' constituents are saying are their biggest pain points, not just with AI, but in general. So it becomes like a self-learning system for their professional development needs, right?
+Christian
+26:57
+This would be an early stage of that if you approach the data lake or context piece in a similar way for organizations.
+Christian
+27:07
+And if we have a way where once a year or biannually
+Christian
+27:12
+it could search those state registries to update the information for you all, then you would have something that
+Christian
+27:21
+updates and gives you a fresh list every single half year to make sure you don't have to go about the whole process over again.
+Jeff
+27:30
+Yeah, I think.
+Christian
+27:30
+So it was like their nickname.
+Jeff
+27:32
+Just let's just assume you got something like that, if that could be aggregated so you could do an analysis of a region or a state, and then we would be able to say, hey, New York, you've got this number of districts who are telling us this, here's what their needs are, etc. To me, we're a lot more proactive when we're having
+Jeff
+27:52
+Todd's having a conversation with the state around what their needs might potentially be based on their users or their clients, which are the school districts.
+Jeff
+28:04
+If we can learn from something, we can aggregate some information and we can bring that proactively. I think there's value from Todd, but there's also value for me because I can start identifying trends. I think there's opportunity to
+Jeff
+28:14
+opportunities and then work with our team on what services we need to offer.
+Christian
+28:18
+Yep. Okay. All right. Let me ask a final.

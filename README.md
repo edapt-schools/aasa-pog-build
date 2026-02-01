@@ -1,113 +1,180 @@
-# US School District Superintendent Data Collection
+# AASA District Intelligence Database
 
-## Project Overview
-Building a comprehensive database of US public school district superintendents by combining NCES national district data with state-level superintendent directories.
+## READ THIS FIRST
 
-## Status: Incomplete (~20% Coverage)
-- **Total US Districts**: 19,281 (from NCES 2024-2025)
-- **Districts with Superintendent Names**: ~3,800
-- **States with Complete Superintendent Data**: 7
-- **States Remaining**: 43
+This repository builds a comprehensive database of US public school districts with superintendent contact information for AASA (The School Superintendents Association).
 
-## Data Architecture
-
-### Base Layer: NCES Data
-The National Center for Education Statistics (NCES) provides authoritative district data for all 50 states:
-- District name, NCES ID
-- Phone, website, full address
-- Grade levels served, district type
-- **Does NOT include superintendent names**
-
-File: `us_districts_base_nces.csv` (19,281 districts)
-
-### Enrichment Layer: State Superintendent Data
-State-level sources provide superintendent names that must be matched to NCES districts:
-
-| State | File | Districts | Source |
-|-------|------|-----------|--------|
-| CA | ca_superintendents.csv | 1,070 | CDE direct download |
-| TX | tx_superintendents.csv | 1,218 | TEA |
-| IL | il_superintendents.csv | 851 | ISBE Excel |
-| NY | ny_superintendents.csv | 682 | tax.ny.gov PDF |
-| OH | oh_superintendents.csv | 607 | ODE |
-| GA | ga_superintendents.csv | 184 | GSSA website |
-| NC | nc_superintendents.csv | 100 | NCSSA |
-
-### Merged Output
-File: `us_districts_with_supes.csv` - All NCES districts with superintendent names where available
-
-## Files in This Repo
-
-### Primary Data Files
-- `us_districts_base_nces.csv` - All 19,281 US districts (no superintendent names)
-- `us_districts_with_supes.csv` - Merged data with partial superintendent coverage
-- `*_superintendents.csv` - State-specific files with superintendent names
-
-### Raw Source Files
-- `ccd_lea_029_2425_w_1a_073025.csv` - Original NCES CCD data file
-- `ca_districts_raw.txt` - Raw California download
-- `il_educational_entities.xls` - Illinois ISBE source
-- `oh_districts_raw.csv` - Ohio source data
-- `nces_all_districts_2425.zip` - NCES ZIP archive
-
-### Documentation
-- `state_doe_urls.txt` - Working state DoE data download URLs
-- `il_findings.txt` - Notes on Illinois extraction
-- `oh_superintendents_STATUS.txt` - Ohio progress notes
-
-## Known Issues
-
-### Blocking Problems for Remaining States
-1. **Broken URLs**: PA, AZ, MI, FL superintendent association pages return 404
-2. **Bot protection**: Arizona DoE blocks automated access (403)
-3. **Name matching**: District names differ between NCES and state data (exact match fails)
-4. **Site restructuring**: Florida DoE reorganized, many pages return empty content
-
-### Data Quality Notes
-- District name matching is imperfect - some state names don't match NCES exactly
-- Superintendent data freshness varies by state source
-- Some states have partial data (not all districts covered)
-
-## Lessons Learned
-
-### What Works
-1. **Google search first** - Official directories found in 20 seconds
-2. **State DoE data downloads** - Most states have Excel/CSV exports
-3. **State superintendent associations** - Often at `[state]ssa.org`
-4. **NCES as base** - Authoritative for district contact info
-
-### What Doesn't Work
-1. **Complex browser automation** - Overkill for public directories
-2. **Spawning expensive agents** - Simple curl + grep faster
-3. **Exact name matching** - District names vary between sources
-
-## Working Data Source URLs
-
-### State DoE Data Downloads (Confirmed)
-- CA: `cde.ca.gov/ds/si/ds/pubschls.asp`
-- IL: `isbe.net/Pages/Data-Analysis-Directories.aspx`
-- TX: TEA direct download
-- NY: `tax.ny.gov` PDF directory
-
-### National
-- NCES: `nces.ed.gov/ccd/files.asp`
-
-## Next Steps (If Continuing)
-
-1. Prioritize large states: MI (886), PA (790), AZ (726), NJ (700)
-2. Check state DoE data download pages: `[state].gov/[doe]/data`
-3. Try state superintendent associations: `[state]ssa.org`
-4. Implement fuzzy matching for district names
-5. Accept partial coverage - names can be enriched later
-
-## CRITICAL RULES (From Project History)
-
-⚠️ **DO NOT merge data between tables without explicit approval**
-⚠️ **NCES data exists as authoritative base - don't re-fetch**
-⚠️ **Check memory files before starting work to avoid duplication**
+**If you are an AI agent, read `AGENT_INSTRUCTIONS.md` immediately.**
 
 ---
 
-*Project started: February 1, 2026*
-*Last updated: February 1, 2026*
-*Status: Paused - needs manual intervention for remaining states*
+## Project Overview
+
+### The Mission
+
+AASA needs to:
+1. **Find districts** that are ready for their consulting services
+2. **Contact superintendents** with personalized outreach
+3. **Score districts** based on signals (Portrait of a Graduate, strategic planning, etc.)
+4. **Support grant applications** by querying districts that meet criteria (e.g., >70% FRPL)
+
+### Two Phases
+
+| Phase | Goal | Status |
+|-------|------|--------|
+| **Phase 1** | Build complete district database with superintendent contacts | **IN PROGRESS** |
+| **Phase 2** | Scrape/score districts on AASA keywords for sales prioritization | NOT STARTED |
+
+**You are working on Phase 1.**
+
+---
+
+## Current State (as of Feb 1, 2026)
+
+### Database
+- **Location**: Supabase PostgreSQL
+- **Total districts**: 19,640
+- **Superintendent coverage**: 2,662 (13.6%)
+
+### Coverage by State
+| State | Districts | With Superintendent | Coverage |
+|-------|-----------|---------------------|----------|
+| TX | 1,260 | 1,216 | 96.5% |
+| CA | 2,382 | 1,346 | 56.5% |
+| FL | 84 | 66 | 78.6% |
+| **47 other states** | **15,914** | **0** | **0%** |
+
+### What's Loaded
+- NCES baseline (19,640 districts)
+- CCD enrichment data
+- State registries: CA, TX, FL only
+
+### What's NOT Loaded (but exists as CSV)
+The following CSV files are in this repo but have NOT been imported to the database:
+- `il_superintendents.csv` (851 records)
+- `ny_superintendents.csv` (682 records)
+- `oh_superintendents.csv` (607 records)
+- `ga_superintendents.csv` (184 records)
+- `nc_superintendents.csv` (100 records)
+
+---
+
+## Repository Structure
+
+```
+superintendent-data/
+├── README.md                    # You are here
+├── AGENT_INSTRUCTIONS.md        # Prompts for AI agents (START HERE)
+├── .env.example                 # Database connection template
+├── .gitignore
+├── package.json                 # Node.js dependencies (pg installed)
+│
+├── planning-docs/               # AASA business context (from client)
+│   ├── AASA Conversation Transcript.txt
+│   ├── Keyword Taxonomy and Synonyms.pdf
+│   └── Lead Scoring Approach.pdf
+│
+├── docs/                        # Technical documentation
+│   ├── ARCHITECTURE.md          # Database schema & design
+│   ├── SOURCES.md               # State-by-state data sources
+│   ├── MATCHING.md              # District matching algorithm
+│   ├── QUALITY.md               # Data quality tiers
+│   └── archive/                 # Old docs (reference only)
+│
+├── scripts/                     # Runnable Node.js scripts
+│   └── db-status.js             # Check database state
+│
+├── data/
+│   ├── raw/                     # Original source files (immutable)
+│   │   ├── nces/                # NCES/CCD federal data
+│   │   └── states/              # State-specific downloads
+│   └── processed/               # CSVs ready to load to database
+│       ├── il_superintendents.csv  ← NOT YET IN DB
+│       ├── ny_superintendents.csv  ← NOT YET IN DB
+│       ├── oh_superintendents.csv  ← NOT YET IN DB
+│       ├── ga_superintendents.csv  ← NOT YET IN DB
+│       └── nc_superintendents.csv  ← NOT YET IN DB
+│
+└── notes/                       # Investigation notes
+    └── state_doe_urls.txt       # Known state DoE data URLs
+```
+
+---
+
+## Database Architecture
+
+### Three-Layer Design
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     SOURCE LAYER                             │
+│                  (Immutable, append-only)                    │
+├───────────────────┬───────────────────┬─────────────────────┤
+│    districts      │  ccd_staff_data   │ state_registry_     │
+│  (NCES baseline)  │ (federal enrich)  │    districts        │
+└─────────┬─────────┴─────────┬─────────┴──────────┬──────────┘
+          │                   │                    │
+          └───────────────────┼────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    MATCHING LAYER                            │
+│            district_matches (links records)                  │
+└─────────────────────────────┬───────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      VIEW LAYER                              │
+│           national_registry (unified view)                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Critical Rule
+
+**NEVER modify source tables directly.**
+- `districts` = NCES baseline (read-only after initial load)
+- `state_registry_districts` = append-only (one insert per state import)
+- All transformations happen through the `national_registry` view
+
+---
+
+## Quick Start
+
+### 1. Set up environment
+```bash
+cp .env.example .env
+# Edit .env with actual database password
+npm install
+```
+
+### 2. Check database status
+```bash
+node scripts/db-status.js
+```
+
+### 3. Load a state's data
+```bash
+node scripts/load-state.js --state=IL --file=il_superintendents.csv
+```
+
+---
+
+## For AI Agents
+
+**Stop reading this file and go to `AGENT_INSTRUCTIONS.md`** for:
+- Exact prompts to copy/paste
+- Rules you must follow
+- Task breakdowns
+- Error handling
+
+---
+
+## Key Contacts
+
+- **Christian Jackson** - Project owner
+- **AASA Team** - Todd (grants/partnerships), Jeff (sales), Tammy (operations)
+
+---
+
+## Links
+
+- **Database**: `postgresql://postgres:***@db.wdvpjyymztrebwaiaidu.supabase.co:5432/postgres`
+- **NCES Data**: https://nces.ed.gov/ccd/files.asp
