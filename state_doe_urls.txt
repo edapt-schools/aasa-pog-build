@@ -1,0 +1,46 @@
+# State DoE Data/Directory URLs - need to find superintendent data downloads
+# Format: STATE|DoE_URL|Notes
+
+AL|https://www.alabamaachieves.org|Alabama
+AK|https://education.alaska.gov|Alaska
+AZ|https://www.azed.gov|Arizona
+AR|https://dese.ade.arkansas.gov|Arkansas
+CO|https://www.cde.state.co.us|Colorado
+CT|https://portal.ct.gov/sde|Connecticut
+DE|https://www.doe.k12.de.us|Delaware
+FL|https://www.fldoe.org|Florida
+HI|https://www.hawaiipublicschools.org|Hawaii - single district state
+ID|https://www.sde.idaho.gov|Idaho
+IN|https://www.in.gov/doe|Indiana
+IA|https://educateiowa.gov|Iowa
+KS|https://www.ksde.org|Kansas
+KY|https://education.ky.gov|Kentucky
+LA|https://www.louisianabelieves.com|Louisiana
+ME|https://www.maine.gov/doe|Maine
+MD|https://www.marylandpublicschools.org|Maryland
+MA|https://www.doe.mass.edu|Massachusetts
+MI|https://www.michigan.gov/mde|Michigan
+MN|https://education.mn.gov|Minnesota
+MS|https://www.mdek12.org|Mississippi
+MO|https://dese.mo.gov|Missouri
+MT|https://opi.mt.gov|Montana
+NE|https://www.education.ne.gov|Nebraska
+NV|https://doe.nv.gov|Nevada
+NH|https://www.education.nh.gov|New Hampshire
+NJ|https://www.nj.gov/education|New Jersey
+NM|https://webnew.ped.state.nm.us|New Mexico
+ND|https://www.nd.gov/dpi|North Dakota
+OK|https://sde.ok.gov|Oklahoma
+OR|https://www.oregon.gov/ode|Oregon
+PA|https://www.education.pa.gov|Pennsylvania
+RI|https://www.ride.ri.gov|Rhode Island
+SC|https://ed.sc.gov|South Carolina
+SD|https://doe.sd.gov|South Dakota
+TN|https://www.tn.gov/education|Tennessee
+UT|https://www.schools.utah.gov|Utah
+VT|https://education.vermont.gov|Vermont
+VA|https://www.doe.virginia.gov|Virginia
+WA|https://www.k12.wa.us|Washington
+WV|https://wvde.us|West Virginia
+WI|https://dpi.wi.gov|Wisconsin
+WY|https://edu.wyoming.gov|Wyoming
