@@ -1,0 +1,27 @@
+{
+  "name": "superintendent-data",
+  "version": "1.0.0",
+  "description": "Building a comprehensive database of US public school district superintendents by combining NCES national district data with state-level superintendent directories.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edapt-schools/aasa-pog-build.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/edapt-schools/aasa-pog-build/issues"
+  },
+  "homepage": "https://github.com/edapt-schools/aasa-pog-build#readme",
+  "dependencies": {
+    "pg": "^8.18.0"
+  }
+}
