@@ -354,6 +354,58 @@ After completing any task, report:
 
 ---
 
+## Workflow Modes
+
+### Use Plan Mode For Complex Tasks
+
+Start in **plan mode** for any task that:
+- Touches multiple states
+- Involves schema changes
+- Affects > 1000 records
+- Has unclear requirements
+
+**How to use plan mode:**
+1. Say "let's plan this first" or use `/plan`
+2. Write out the full plan before executing
+3. Get approval on the plan
+4. Execute the plan
+
+**If something goes sideways:**
+- STOP immediately
+- Switch back to plan mode
+- Re-plan with new information
+- Don't keep pushing a failing approach
+
+### Use Subagents For Parallel Work
+
+Append **"use subagents"** to prompts when you want to:
+- Collect data for multiple states at once (3-5 states optimal)
+- Keep the main context clean during large operations
+- Throw more compute at a problem
+
+**Example:**
+```
+Collect superintendent data for MI, PA, NJ, AZ, and WA. Use subagents to do this in parallel.
+```
+
+**Benefits:**
+- Faster execution (parallel vs sequential)
+- Main agent context stays clean
+- Can monitor multiple states at once
+
+### Custom Commands Available
+
+This repo has custom commands in `.claude/commands/`:
+
+| Command | Purpose |
+|---------|---------|
+| `/db-status` | Check database coverage |
+| `/load-state <STATE>` | Load a state's CSV to database |
+| `/collect-state <STATE>` | Find and collect data for a state |
+| `/collect-batch <STATES>` | Collect multiple states in parallel |
+
+---
+
 ## Questions? Escalate When:
 
 1. Match rate < 85% for a state
