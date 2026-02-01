@@ -4,7 +4,9 @@
 
 This repository builds a comprehensive database of US public school districts with superintendent contact information for AASA (The School Superintendents Association).
 
-**If you are an AI agent, read `AGENT_INSTRUCTIONS.md` immediately.**
+**If you are Claude Code**: This repo has a `CLAUDE.md` file that will be auto-loaded at session start.
+
+**If you are another AI agent**: Read `AGENT_INSTRUCTIONS.md` for prompts and rules.
 
 ---
 
