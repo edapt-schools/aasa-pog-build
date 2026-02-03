@@ -18,7 +18,24 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+logs/
 
 # Build
 dist/
 build/
+
+# Data files (too large for git, may contain PII)
+data/raw/
+data/processed/
+data/exports/
+*.csv
+*.xlsx
+*.xls
+*.pdf
+*.numbers
+*.pages
+*.zip
+
+# Temporary/experimental files
+*.tmp
+*.bak

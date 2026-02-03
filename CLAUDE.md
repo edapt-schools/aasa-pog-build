@@ -6,8 +6,12 @@ This file is read by Claude Code at session start. It contains project rules, co
 
 Building a database of all ~19,500 US public school districts with superintendent contact information for AASA (The School Superintendents Association).
 
-**Current state**: 13.6% superintendent coverage (2,662 / 19,640 districts)
+**Current state**: 33.5% superintendent coverage (6,619 / 19,740 districts)
 **Goal**: 90%+ coverage
+
+**Key Reference Docs:**
+- `docs/STATE_SOURCES_GUIDE.md` - Where to find data for each state
+- `logs/SESSION_LOG_2026-02-01.md` - Current session status and handoff notes
 
 ## Database Connection
 
@@ -88,29 +92,49 @@ name.toLowerCase()
   .replace(/\s+/g, ' ')
 ```
 
-## Current Database State
+## Current Database State (Updated Feb 1, 2026 - Phase 2 Complete)
+
+**Overall: 33.5% coverage (6,619 / 19,740 districts)**
 
 | Table | Records |
 |-------|---------|
-| districts | 19,595 |
-| state_registry_districts | 2,355 |
-| district_matches | 2,352 |
+| districts | 19,740 |
+| state_registry_districts | 6,384 |
+| district_matches | 6,309 |
 
-| State | Records | Coverage |
-|-------|---------|----------|
-| TX | 1,218 | 96.5% |
-| CA | 1,070 | 56.5% |
-| FL | 67 | 78.6% |
-| 47 others | 0 | 0% |
+### States Loaded (18 states)
 
-## Files Ready to Load
+| State | Loaded | NCES Expected | Coverage | Notes |
+|-------|--------|---------------|----------|-------|
+| TX | 1,218 | 1,229 | 99.1% | Excellent |
+| HI | 1 | 1 | 100% | Single statewide district |
+| MD | 24 | 25 | 96.0% | Excellent |
+| OK | 536 | 578 | 92.7% | Good |
+| MS | 137 | 152 | 90.1% | Good |
+| SD | 147 | 165 | 89.1% | Gap = cooperatives |
+| WV | 65 | 67 | 88.1% | County school districts |
+| NV | 17 | 20 | 85.0% | Gap = charters, corrections |
+| IL | 850 | 1,028 | 82.7% | Good |
+| WY | 48 | 86 | 55.8% | Gap = BOCES, institutions |
+| NJ | 553 | 695 | 79.6% | Acceptable |
+| FL | 64 | 82 | 78.0% | Acceptable |
+| NY | 673 | 1,090 | 61.7% | NEEDS RE-COLLECTION |
+| GA | 150 | 250 | 60.0% | NEEDS RE-COLLECTION |
+| OH | 607 | 1,045 | 58.1% | NEEDS RE-COLLECTION |
+| CA | 1,070 | 2,090 | 51.2% | NEEDS RE-COLLECTION |
+| VT | 56 | 188 | 29.3% | SUs oversee member districts |
+| NC | 100 | 352 | 28.4% | PRIORITY RE-COLLECTION |
 
-These CSVs exist but are NOT in the database yet:
-- `data/processed/il_superintendents.csv` (851)
-- `data/processed/ny_superintendents.csv` (682)
-- `data/processed/oh_superintendents.csv` (607)
-- `data/processed/ga_superintendents.csv` (184)
-- `data/processed/nc_superintendents.csv` (100)
+### States Blocked (3 states)
+
+| State | Issue | Available/Expected |
+|-------|-------|-------------------|
+| DE | Charter leader data not accessible | 19/45 |
+| DC | Charter LEA leaders only in PDF | 1/71 |
+| RI | Charter data fragmented | 36/67 |
+
+### States at 0% (32 states)
+AL, AK, AZ, AR, CO, CT, ID, IN, IA, KS, KY, LA, ME, MA, MI, MN, MO, MT, NE, NH, NM, ND, OR, PA, SC, TN, UT, VA, WA, WI, DE, DC, RI
 
 ## Workflow Guidance
 
@@ -149,6 +173,13 @@ node scripts/db-status.js
 - Don't merge tables without checking district_matches
 - Don't assume state district names match NCES exactly
 - Don't skip the data_imports audit record
+- Don't assume CSVs are complete - always compare against NCES district count
+- Don't forget charter school LEAs - they're in NCES but often missing from state directories
+
+### Session Continuity
+- If session crashes, check `logs/SESSION_LOG_*.md` for status
+- Previous agent crashed on Kentucky (fetch-ky.js) - test carefully
+- Many fetch scripts exist in `/scripts/fetch-*.js` - some untested
 
 ---
 
