@@ -1,14 +1,14 @@
 # AASA Platform API - Production Dockerfile
-# Cache bust: v2
+# Note: Railway uses repo root as Docker context
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Copy workspace config and package files (from repo root context)
+# Copy workspace config and package files
 COPY aasa-platform/package*.json ./
 COPY aasa-platform/packages/shared/package*.json ./packages/shared/
 COPY aasa-platform/packages/api/package*.json ./packages/api/
 
-# Install all workspace dependencies
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
 # Copy source files
