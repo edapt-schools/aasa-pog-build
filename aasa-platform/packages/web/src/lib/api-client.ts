@@ -34,10 +34,15 @@ export class ApiClientError extends Error {
 }
 
 /**
+ * Get API base URL from environment or use relative path for dev
+ */
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
+/**
  * Base fetch wrapper with error handling and auth credentials
  */
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `/api${endpoint}`
+  const url = `${API_BASE_URL}/api${endpoint}`
 
   const config: RequestInit = {
     ...options,

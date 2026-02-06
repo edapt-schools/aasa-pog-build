@@ -3,6 +3,10 @@
  * Centralized fetch wrapper with auth credentials and type safety
  */
 /**
+ * Get API base URL from environment or use relative path for dev
+ */
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+/**
  * Custom error class for API errors
  */
 export class ApiClientError extends Error {
@@ -19,7 +23,7 @@ export class ApiClientError extends Error {
  * Base fetch wrapper with error handling and auth credentials
  */
 async function apiFetch(endpoint, options = {}) {
-    const url = `/api${endpoint}`;
+    const url = `${API_BASE_URL}/api${endpoint}`;
     const config = {
         ...options,
         credentials: 'include', // Include auth cookies
