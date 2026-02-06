@@ -1,14 +1,14 @@
 # AASA Platform Web - Production Dockerfile
-# Cache bust: v2
+# Note: Railway uses repo root as Docker context
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Copy workspace config and package files (from repo root context)
+# Copy workspace config and package files
 COPY aasa-platform/package*.json ./
 COPY aasa-platform/packages/shared/package*.json ./packages/shared/
 COPY aasa-platform/packages/web/package*.json ./packages/web/
 
-# Install all workspace dependencies (--legacy-peer-deps for React 19 compatibility)
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
 # Copy source files
@@ -32,10 +32,8 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Install serve
 RUN npm install -g serve
 
-# Copy built files
 COPY --from=base /app/packages/web/dist ./dist
 
 ENV PORT=3000
