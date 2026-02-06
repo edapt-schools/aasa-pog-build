@@ -3,6 +3,7 @@
  * Centralized fetch wrapper with auth credentials and type safety
  */
 
+import { createClient } from '@supabase/supabase-js'
 import type {
   ListDistrictsParams,
   ListDistrictsResponse,
@@ -18,6 +19,12 @@ import type {
   TrendingResponse,
   APIError,
 } from '@aasa-platform/shared'
+
+// Initialize Supabase client for getting auth token
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL || '',
+  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+)
 
 /**
  * Custom error class for API errors
@@ -44,11 +51,16 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}/api${endpoint}`
 
+  // Get current Supabase session for Bearer token auth
+  const { data: { session } } = await supabase.auth.getSession()
+  const accessToken = session?.access_token
+
   const config: RequestInit = {
     ...options,
-    credentials: 'include', // Include auth cookies
+    credentials: 'include', // Keep cookies as fallback
     headers: {
       'Content-Type': 'application/json',
+      ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
       ...options.headers,
     },
   }
