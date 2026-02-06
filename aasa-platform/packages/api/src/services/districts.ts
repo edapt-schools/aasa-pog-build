@@ -1,0 +1,178 @@
+import { eq, and, gte, lte, inArray, ilike, sql, count } from 'drizzle-orm'
+import { getDb } from '../db/index.js'
+import * as schema from '../db/schema.js'
+import type {
+  ListDistrictsParams,
+  ListDistrictsResponse,
+  DistrictDetailResponse,
+  DistrictDocumentsResponse,
+} from '@aasa-platform/shared'
+
+/**
+ * List districts with filters and pagination
+ */
+export async function listDistricts(
+  params: ListDistrictsParams
+): Promise<ListDistrictsResponse> {
+  const db = getDb()
+
+  // Pagination defaults
+  const limit = params.limit || 50
+  const offset = params.offset || 0
+
+  // Build WHERE conditions
+  const conditions = []
+
+  // State filter (multi-select)
+  if (params.state && params.state.length > 0) {
+    conditions.push(inArray(schema.districts.state, params.state))
+  }
+
+  // Enrollment range
+  if (params.enrollmentMin !== undefined) {
+    conditions.push(gte(schema.districts.enrollment, params.enrollmentMin))
+  }
+  if (params.enrollmentMax !== undefined) {
+    conditions.push(lte(schema.districts.enrollment, params.enrollmentMax))
+  }
+
+  // Has superintendent (email not null)
+  if (params.hasSuperintendent !== undefined) {
+    if (params.hasSuperintendent) {
+      conditions.push(sql`${schema.districts.superintendentEmail} IS NOT NULL`)
+    } else {
+      conditions.push(sql`${schema.districts.superintendentEmail} IS NULL`)
+    }
+  }
+
+  // Name search (case-insensitive)
+  if (params.search) {
+    conditions.push(ilike(schema.districts.name, `%${params.search}%`))
+  }
+
+  // Build query
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+  // Get total count
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(schema.districts)
+    .where(whereClause)
+
+  // Get paginated results
+  const districts = await db
+    .select()
+    .from(schema.districts)
+    .where(whereClause)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(schema.districts.name)
+
+  return {
+    data: districts.map(serializeDistrict),
+    pagination: {
+      total: Number(total),
+      limit,
+      offset,
+      hasMore: offset + limit < Number(total),
+    },
+  }
+}
+
+/**
+ * Get single district by NCES ID
+ */
+export async function getDistrictByNcesId(
+  ncesId: string
+): Promise<DistrictDetailResponse | null> {
+  const db = getDb()
+
+  // Get district
+  const [district] = await db
+    .select()
+    .from(schema.districts)
+    .where(eq(schema.districts.ncesId, ncesId))
+    .limit(1)
+
+  if (!district) {
+    return null
+  }
+
+  // Get keyword scores
+  const [keywordScores] = await db
+    .select()
+    .from(schema.districtKeywordScores)
+    .where(eq(schema.districtKeywordScores.ncesId, ncesId))
+    .limit(1)
+
+  // Get document count
+  const [{ documentCount }] = await db
+    .select({ documentCount: count() })
+    .from(schema.districtDocuments)
+    .where(eq(schema.districtDocuments.ncesId, ncesId))
+
+  return {
+    district: serializeDistrict(district),
+    keywordScores: keywordScores ? serializeKeywordScores(keywordScores) : null,
+    documentCount: Number(documentCount),
+  }
+}
+
+/**
+ * Get documents for a district
+ */
+export async function getDistrictDocuments(
+  ncesId: string
+): Promise<DistrictDocumentsResponse> {
+  const db = getDb()
+
+  const documents = await db
+    .select()
+    .from(schema.districtDocuments)
+    .where(eq(schema.districtDocuments.ncesId, ncesId))
+    .orderBy(schema.districtDocuments.discoveredAt)
+
+  return {
+    data: documents.map(serializeDocument),
+    total: documents.length,
+  }
+}
+
+// =============================================================================
+// Serialization helpers (convert DB types to API types)
+// =============================================================================
+
+function serializeDistrict(district: typeof schema.districts.$inferSelect) {
+  return {
+    ...district,
+    createdAt: district.createdAt?.toISOString() || new Date().toISOString(),
+    updatedAt: district.updatedAt?.toISOString() || new Date().toISOString(),
+    lastScrapedAt: district.lastScrapedAt?.toISOString() || null,
+    frplPercent: district.frplPercent?.toString() || null,
+    minorityPercent: district.minorityPercent?.toString() || null,
+  }
+}
+
+function serializeKeywordScores(
+  scores: typeof schema.districtKeywordScores.$inferSelect
+) {
+  return {
+    ...scores,
+    readinessScore: scores.readinessScore?.toString() || null,
+    alignmentScore: scores.alignmentScore?.toString() || null,
+    activationScore: scores.activationScore?.toString() || null,
+    brandingScore: scores.brandingScore?.toString() || null,
+    totalScore: scores.totalScore?.toString() || null,
+    keywordMatches: (scores.keywordMatches as Record<string, unknown>) || null,
+    scoredAt: scores.scoredAt?.toISOString() || null,
+    updatedAt: scores.updatedAt?.toISOString() || null,
+  }
+}
+
+function serializeDocument(doc: typeof schema.districtDocuments.$inferSelect) {
+  return {
+    ...doc,
+    discoveredAt: doc.discoveredAt?.toISOString() || null,
+    lastCrawledAt: doc.lastCrawledAt?.toISOString() || null,
+  }
+}

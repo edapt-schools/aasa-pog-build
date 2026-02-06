@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+packages/*/dist
+packages/web/build
+
+# Development files
+.env.local
+.env.*.local
+*.log
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+coverage
+
+# Documentation
+*.md
+docs/
