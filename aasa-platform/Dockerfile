@@ -2,17 +2,17 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Copy workspace config and package files
-COPY package*.json ./
-COPY packages/shared/package*.json ./packages/shared/
-COPY packages/web/package*.json ./packages/web/
+# Copy workspace config and package files (from repo root context)
+COPY aasa-platform/package*.json ./
+COPY aasa-platform/packages/shared/package*.json ./packages/shared/
+COPY aasa-platform/packages/web/package*.json ./packages/web/
 
 # Install all workspace dependencies (--legacy-peer-deps for React 19 compatibility)
 RUN npm install --legacy-peer-deps
 
 # Copy source files
-COPY packages/shared/ ./packages/shared/
-COPY packages/web/ ./packages/web/
+COPY aasa-platform/packages/shared/ ./packages/shared/
+COPY aasa-platform/packages/web/ ./packages/web/
 
 # Build args for Vite (needed at build time)
 ARG VITE_API_URL
