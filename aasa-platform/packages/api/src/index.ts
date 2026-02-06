@@ -46,7 +46,9 @@ app.use(
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    // 'none' required for cross-origin cookies (frontend and API on different domains)
+    // Must be used with secure: true in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   })
 )
 
