@@ -1,0 +1,12 @@
+# Nixpacks config for AASA Platform Web
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["cd packages/web && npm run build"]
+
+[start]
+cmd = "npx serve packages/web/dist -l $PORT"

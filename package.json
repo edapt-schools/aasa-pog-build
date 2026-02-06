@@ -22,7 +22,9 @@
   },
   "homepage": "https://github.com/edapt-schools/aasa-pog-build#readme",
   "dependencies": {
-    "pdf-parse": "^2.4.5",
+    "dotenv": "^17.2.3",
+    "openai": "^6.17.0",
+    "pdf-parse": "^1.1.1",
     "pg": "^8.18.0",
     "xlsx": "^0.18.5"
   }

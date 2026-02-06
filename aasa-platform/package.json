@@ -1,0 +1,21 @@
+{
+  "name": "aasa-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@aasa-platform/web",
+    "dev:api": "npm run dev --workspace=@aasa-platform/api",
+    "dev:all": "concurrently \"npm:dev\" \"npm:dev:api\"",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.2"
+  }
+}
