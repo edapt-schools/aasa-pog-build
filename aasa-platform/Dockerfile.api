@@ -31,8 +31,8 @@ COPY aasa-platform/packages/api/package*.json ./packages/api/
 # Install production dependencies only
 RUN npm install --legacy-peer-deps --omit=dev
 
-# Copy built files
-COPY --from=base /app/packages/shared/dist ./packages/shared/dist
+# Copy shared package (exports TypeScript source directly, no build step)
+COPY --from=base /app/packages/shared/src ./packages/shared/src
 COPY --from=base /app/packages/shared/package.json ./packages/shared/
 COPY --from=base /app/packages/api/dist ./packages/api/dist
 COPY --from=base /app/packages/api/package.json ./packages/api/
