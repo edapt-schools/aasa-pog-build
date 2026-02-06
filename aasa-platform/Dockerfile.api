@@ -2,17 +2,17 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Copy workspace config and package files
-COPY package*.json ./
-COPY packages/shared/package*.json ./packages/shared/
-COPY packages/api/package*.json ./packages/api/
+# Copy workspace config and package files (from repo root context)
+COPY aasa-platform/package*.json ./
+COPY aasa-platform/packages/shared/package*.json ./packages/shared/
+COPY aasa-platform/packages/api/package*.json ./packages/api/
 
 # Install all workspace dependencies
 RUN npm install --legacy-peer-deps
 
 # Copy source files
-COPY packages/shared/ ./packages/shared/
-COPY packages/api/ ./packages/api/
+COPY aasa-platform/packages/shared/ ./packages/shared/
+COPY aasa-platform/packages/api/ ./packages/api/
 
 # Build the API
 WORKDIR /app/packages/api
@@ -23,9 +23,9 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Copy package files for production install
-COPY package*.json ./
-COPY packages/shared/package*.json ./packages/shared/
-COPY packages/api/package*.json ./packages/api/
+COPY aasa-platform/package*.json ./
+COPY aasa-platform/packages/shared/package*.json ./packages/shared/
+COPY aasa-platform/packages/api/package*.json ./packages/api/
 
 # Install production dependencies only
 RUN npm install --legacy-peer-deps --omit=dev
