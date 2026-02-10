@@ -2,10 +2,9 @@
  * API Client for AASA District Intelligence Platform
  * Centralized fetch wrapper with auth credentials and type safety
  */
-/**
- * Get API base URL from environment or use relative path for dev
- */
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+import { createClient } from '@supabase/supabase-js';
+// Initialize Supabase client for getting auth token
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL || '', import.meta.env.VITE_SUPABASE_ANON_KEY || '');
 /**
  * Custom error class for API errors
  */
@@ -20,15 +19,23 @@ export class ApiClientError extends Error {
     }
 }
 /**
+ * Get API base URL from environment or use relative path for dev
+ */
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+/**
  * Base fetch wrapper with error handling and auth credentials
  */
 async function apiFetch(endpoint, options = {}) {
     const url = `${API_BASE_URL}/api${endpoint}`;
+    // Get current Supabase session for Bearer token auth
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
     const config = {
         ...options,
-        credentials: 'include', // Include auth cookies
+        credentials: 'include', // Keep cookies as fallback
         headers: {
             'Content-Type': 'application/json',
+            ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
             ...options.headers,
         },
     };
@@ -140,6 +147,15 @@ export class ApiClient {
         });
     }
     /**
+     * Command-center search and action orchestration.
+     */
+    async runCommand(params) {
+        return apiFetch('/search/command', {
+            method: 'POST',
+            body: JSON.stringify(params),
+        });
+    }
+    /**
      * Get similar documents using vector similarity
      */
     async getSimilarDocuments(documentId, limit = 20) {
@@ -152,6 +168,12 @@ export class ApiClient {
      */
     async getKeywordEvidence(ncesId) {
         return apiFetch(`/search/evidence/${ncesId}`);
+    }
+    /**
+     * Get on-demand "why this district" payload.
+     */
+    async getDistrictWhyDetails(ncesId, confidenceThreshold = 0.6) {
+        return apiFetch(`/search/why/${ncesId}?confidenceThreshold=${confidenceThreshold}`);
     }
     // =========================================================================
     // Insights API Methods
