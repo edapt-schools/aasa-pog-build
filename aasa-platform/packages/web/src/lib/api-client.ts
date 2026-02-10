@@ -5,6 +5,9 @@
 
 import { createClient } from '@supabase/supabase-js'
 import type {
+  CommandRequest,
+  CommandResponse,
+  DistrictWhyDetails,
   ListDistrictsParams,
   ListDistrictsResponse,
   DistrictDetailResponse,
@@ -191,6 +194,16 @@ export class ApiClient {
   }
 
   /**
+   * Command-center search and action orchestration.
+   */
+  async runCommand(params: CommandRequest): Promise<CommandResponse> {
+    return apiFetch<CommandResponse>('/search/command', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    })
+  }
+
+  /**
    * Get similar documents using vector similarity
    */
   async getSimilarDocuments(documentId: string, limit: number = 20): Promise<SimilarDocumentsResponse> {
@@ -204,6 +217,18 @@ export class ApiClient {
    */
   async getKeywordEvidence(ncesId: string): Promise<KeywordEvidenceResponse> {
     return apiFetch<KeywordEvidenceResponse>(`/search/evidence/${ncesId}`)
+  }
+
+  /**
+   * Get on-demand "why this district" payload.
+   */
+  async getDistrictWhyDetails(
+    ncesId: string,
+    confidenceThreshold: number = 0.6
+  ): Promise<DistrictWhyDetails> {
+    return apiFetch<DistrictWhyDetails>(
+      `/search/why/${ncesId}?confidenceThreshold=${confidenceThreshold}`
+    )
   }
 
   // =========================================================================

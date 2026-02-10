@@ -7,6 +7,7 @@ import AuthCallback from './pages/AuthCallback';
 import Discovery from './pages/Discovery';
 import Grants from './pages/Grants';
 import Insights from './pages/Insights';
+import CommandCenter from './pages/CommandCenter';
 /**
  * Protected Route Component
  * Redirects to login if not authenticated
@@ -24,7 +25,7 @@ function ProtectedRoute({ children }) {
 export const router = createBrowserRouter([
     {
         path: '/',
-        element: _jsx(Navigate, { to: "/discovery", replace: true }),
+        element: _jsx(Navigate, { to: "/command", replace: true }),
     },
     {
         path: '/login',
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
     {
         element: (_jsx(ProtectedRoute, { children: _jsx(AppLayout, {}) })),
         children: [
+            {
+                path: '/command',
+                element: _jsx(CommandCenter, {}),
+            },
             {
                 path: '/discovery',
                 element: _jsx(Discovery, {}),
