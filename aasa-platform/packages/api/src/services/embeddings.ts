@@ -21,7 +21,7 @@ function getOpenAI() {
 
 /**
  * Generate embedding for a text query
- * Uses text-embedding-ada-002 (1536 dimensions)
+ * Uses text-embedding-3-small (1536 dimensions)
  * Same model used to create document embeddings in database
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
@@ -29,7 +29,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const client = getOpenAI()
 
     const response = await client.embeddings.create({
-      model: 'text-embedding-ada-002',
+      model: 'text-embedding-3-small',
       input: text,
     })
 
@@ -51,7 +51,7 @@ export async function generateEmbeddingsBatch(
     const client = getOpenAI()
 
     const response = await client.embeddings.create({
-      model: 'text-embedding-ada-002',
+      model: 'text-embedding-3-small',
       input: texts,
     })
 

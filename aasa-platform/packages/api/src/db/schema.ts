@@ -312,7 +312,7 @@ export const districtKeywordScores = pgTable('district_keyword_scores', {
 
 /**
  * Document Embeddings - Vector embeddings for semantic search
- * Uses pgvector extension with OpenAI ada-002 embeddings (1536 dimensions)
+ * Uses pgvector extension with OpenAI text-embedding-3-small embeddings (1536 dimensions)
  */
 export const documentEmbeddings = pgTable('document_embeddings', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -320,7 +320,7 @@ export const documentEmbeddings = pgTable('document_embeddings', {
   chunkIndex: integer('chunk_index').default(0).notNull(), // Position in document
   chunkText: text('chunk_text').notNull(), // Original text (~1500 chars)
 
-  // Vector column - 1536 dimensions for OpenAI ada-002
+  // Vector column - 1536 dimensions for OpenAI text-embedding-3-small
   embedding: vector('embedding', { dimensions: 1536 }),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
