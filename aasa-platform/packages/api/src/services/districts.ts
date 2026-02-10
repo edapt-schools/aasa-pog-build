@@ -50,6 +50,25 @@ export async function listDistricts(
     conditions.push(ilike(schema.districts.name, `%${params.search}%`))
   }
 
+  // Outreach tier (multi-select)
+  if (params.outreachTier && params.outreachTier.length > 0) {
+    conditions.push(inArray(schema.districtKeywordScores.outreachTier, params.outreachTier))
+  }
+
+  // Keyword score thresholds
+  if (params.readinessScoreMin !== undefined) {
+    conditions.push(sql`${schema.districtKeywordScores.readinessScore}::decimal >= ${params.readinessScoreMin}`)
+  }
+  if (params.alignmentScoreMin !== undefined) {
+    conditions.push(sql`${schema.districtKeywordScores.alignmentScore}::decimal >= ${params.alignmentScoreMin}`)
+  }
+  if (params.activationScoreMin !== undefined) {
+    conditions.push(sql`${schema.districtKeywordScores.activationScore}::decimal >= ${params.activationScoreMin}`)
+  }
+  if (params.brandingScoreMin !== undefined) {
+    conditions.push(sql`${schema.districtKeywordScores.brandingScore}::decimal >= ${params.brandingScoreMin}`)
+  }
+
   // Build query
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
@@ -57,19 +76,30 @@ export async function listDistricts(
   const [{ total }] = await db
     .select({ total: count() })
     .from(schema.districts)
+    .leftJoin(
+      schema.districtKeywordScores,
+      eq(schema.districts.ncesId, schema.districtKeywordScores.ncesId)
+    )
     .where(whereClause)
 
   // Get paginated results
   const districts = await db
-    .select()
+    .select({
+      district: schema.districts,
+      keywordScores: schema.districtKeywordScores,
+    })
     .from(schema.districts)
+    .leftJoin(
+      schema.districtKeywordScores,
+      eq(schema.districts.ncesId, schema.districtKeywordScores.ncesId)
+    )
     .where(whereClause)
     .limit(limit)
     .offset(offset)
     .orderBy(schema.districts.name)
 
   return {
-    data: districts.map(serializeDistrict),
+    data: districts.map((row) => serializeDistrict(row.district)),
     pagination: {
       total: Number(total),
       limit,

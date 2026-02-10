@@ -274,3 +274,121 @@ export interface TrendingResponse {
   period: string
   keywords: TrendingKeyword[]
 }
+
+// =============================================================================
+// AI Command Center Types (vNext)
+// =============================================================================
+
+export type ConfidenceBand = 'high' | 'medium' | 'low'
+
+export interface SignalContribution {
+  signal: string
+  category: 'readiness' | 'alignment' | 'activation' | 'branding' | 'semantic' | 'eligibility' | 'engagement'
+  weight: number
+  reason?: string
+}
+
+export interface DistrictWhyDetails {
+  ncesId: string
+  confidence: number
+  confidenceBand: ConfidenceBand
+  summary: string
+  topSignals: SignalContribution[]
+  sourceExcerpts: Array<{
+    documentUrl?: string | null
+    keyword: string
+    excerpt: string
+  }>
+  dampeners?: Array<{
+    signal: string
+    impact: number
+    reason: string
+  }>
+}
+
+export interface LeadCommandFilters {
+  states?: string[]
+  minTotalScore?: number
+  minReadinessScore?: number
+  minActivationScore?: number
+  limit?: number
+  excludeNcesIds?: string[]
+}
+
+export interface EngagementEvent {
+  ncesId: string
+  eventType:
+    | 'email_sent'
+    | 'call_made'
+    | 'meeting_booked'
+    | 'meeting_held'
+    | 'proposal_sent'
+    | 'won'
+    | 'lost'
+  happenedAt: string
+}
+
+export interface EngagementSignals {
+  events: EngagementEvent[]
+  suppressionDays?: number
+}
+
+export interface GrantCriteria {
+  frplMin?: number
+  minorityMin?: number
+  enrollmentMin?: number
+  enrollmentMax?: number
+  states?: string[]
+  requiredKeywords?: string[]
+  preferredKeywords?: string[]
+}
+
+export interface CommandAttachment {
+  filename: string
+  mimeType: string
+  textContent: string
+}
+
+export type CommandIntent =
+  | 'next_hottest_uncontacted'
+  | 'grant_match'
+  | 'district_search'
+  | 'lead_search'
+  | 'insights_briefing'
+  | 'unknown'
+
+export interface CommandRequest {
+  prompt: string
+  attachment?: CommandAttachment
+  leadFilters?: LeadCommandFilters
+  engagementSignals?: EngagementSignals
+  grantCriteria?: GrantCriteria
+  confidenceThreshold?: number
+}
+
+export interface CommandDistrictResult {
+  district: District
+  score: {
+    total: number
+    readiness: number
+    alignment: number
+    activation: number
+    branding: number
+    composite: number
+  }
+  why: DistrictWhyDetails
+  actions: {
+    openDistrictSite?: string | null
+    email?: string | null
+    ncesId: string | null
+  }
+}
+
+export interface CommandResponse {
+  intent: CommandIntent
+  confidenceThreshold: number
+  explanation: string
+  grantCriteria?: GrantCriteria
+  districts: CommandDistrictResult[]
+  generatedAt: string
+}

@@ -3,6 +3,11 @@ import { getDb } from '../db/index.js'
 import { generateEmbedding } from './embeddings.js'
 import { districtKeywordScores, districts } from '../db/schema.js'
 import type {
+  CommandRequest,
+  CommandResponse,
+  ConfidenceBand,
+  SignalContribution,
+  GrantCriteria,
   SemanticSearchParams,
   SemanticSearchResponse,
   SimilarDocumentsResponse,
@@ -343,5 +348,367 @@ export async function getKeywordEvidence(ncesId: string): Promise<KeywordEvidenc
     branding,
     totalScore: data.totalScore ? parseFloat(data.totalScore) : null,
     scoredAt: data.scoredAt ? data.scoredAt.toISOString() : null,
+  }
+}
+
+function toNumber(value: unknown): number {
+  if (value === null || value === undefined) return 0
+  if (typeof value === 'number') return value
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function toConfidenceBand(confidence: number): ConfidenceBand {
+  if (confidence >= 0.8) return 'high'
+  if (confidence >= 0.6) return 'medium'
+  return 'low'
+}
+
+function extractGrantCriteria(prompt: string, attachmentText?: string): GrantCriteria {
+  const source = `${prompt}\n${attachmentText || ''}`.toLowerCase()
+  const frpl = source.match(/(?:frpl|free(?:\\s|-)reduced(?:\\s|-)lunch)[^\\d]{0,20}(\\d{1,3})\\s*%?/)
+  const minority = source.match(/minority[^\\d]{0,20}(\\d{1,3})\\s*%?/)
+  const enrollmentMin = source.match(/(?:enrollment|students)[^\\d]{0,20}(?:>=|over|above|at least)\\s*(\\d{2,7})/)
+
+  const states = Array.from(
+    new Set(
+      (prompt.match(/\\b[A-Z]{2}\\b/g) || [])
+        .map((code) => code.toUpperCase())
+        .filter((code) => code !== 'AI' && code !== 'US')
+    )
+  )
+
+  const requiredKeywords: string[] = []
+  const keywordHints = [
+    'portrait of a graduate',
+    'measure what matters',
+    'performance tasks',
+    'competency',
+    'strategic plan',
+  ]
+  for (const hint of keywordHints) {
+    if (source.includes(hint)) requiredKeywords.push(hint)
+  }
+
+  return {
+    frplMin: frpl ? Math.min(100, Number(frpl[1])) : undefined,
+    minorityMin: minority ? Math.min(100, Number(minority[1])) : undefined,
+    enrollmentMin: enrollmentMin ? Number(enrollmentMin[1]) : undefined,
+    states: states.length > 0 ? states : undefined,
+    requiredKeywords: requiredKeywords.length > 0 ? requiredKeywords : undefined,
+  }
+}
+
+/**
+ * Command orchestration endpoint backend:
+ * - next hottest uncontacted leads
+ * - grant matching with criteria extraction
+ * - basic district search fallback
+ */
+export async function runCommand(request: CommandRequest): Promise<CommandResponse> {
+  const db = getDb()
+  const prompt = request.prompt.trim()
+  const confidenceThreshold = request.confidenceThreshold ?? 0.6
+  const lowerPrompt = prompt.toLowerCase()
+
+  const isLeadIntent =
+    lowerPrompt.includes('next hottest') ||
+    lowerPrompt.includes('uncontacted') ||
+    lowerPrompt.includes('lead')
+  const isGrantIntent =
+    lowerPrompt.includes('grant') ||
+    lowerPrompt.includes('frpl') ||
+    lowerPrompt.includes('minority')
+  const isInsightsIntent =
+    lowerPrompt.includes('trend') ||
+    lowerPrompt.includes('brief') ||
+    lowerPrompt.includes('insight') ||
+    lowerPrompt.includes('state overview')
+
+  const intent = isInsightsIntent
+    ? 'insights_briefing'
+    : isGrantIntent
+    ? 'grant_match'
+    : isLeadIntent
+      ? 'next_hottest_uncontacted'
+      : 'district_search'
+
+  const parsedGrantCriteria =
+    intent === 'grant_match'
+      ? {
+          ...extractGrantCriteria(prompt, request.attachment?.textContent),
+          ...(request.grantCriteria || {}),
+        }
+      : undefined
+
+  const suppressionDays = request.engagementSignals?.suppressionDays ?? 60
+  const nowMs = Date.now()
+  const suppressedSet = new Set<string>()
+  for (const event of request.engagementSignals?.events || []) {
+    const deltaDays = (nowMs - new Date(event.happenedAt).getTime()) / (1000 * 60 * 60 * 24)
+    if (deltaDays <= suppressionDays) {
+      suppressedSet.add(event.ncesId)
+    }
+  }
+  for (const excluded of request.leadFilters?.excludeNcesIds || []) {
+    suppressedSet.add(excluded)
+  }
+
+  const rows = await db.execute(sql`
+    SELECT
+      d.nces_id,
+      d.name,
+      d.state,
+      d.city,
+      d.enrollment,
+      d.website_domain,
+      d.superintendent_name,
+      d.superintendent_email,
+      d.frpl_percent,
+      d.minority_percent,
+      s.readiness_score,
+      s.alignment_score,
+      s.activation_score,
+      s.branding_score,
+      s.total_score,
+      s.keyword_matches
+    FROM districts d
+    LEFT JOIN district_keyword_scores s ON d.nces_id = s.nces_id
+    WHERE d.nces_id IS NOT NULL
+    ORDER BY s.total_score DESC NULLS LAST
+    LIMIT ${request.leadFilters?.limit || 120}
+  `)
+
+  const requestedLimit = request.leadFilters?.limit || 25
+  let districtsOut = (rows as any[])
+    .filter((row) => row.nces_id && !suppressedSet.has(row.nces_id))
+    .filter((row) => {
+      if (!request.leadFilters?.states || request.leadFilters.states.length === 0) return true
+      return request.leadFilters.states.includes(row.state)
+    })
+    .filter((row) => toNumber(row.total_score) >= (request.leadFilters?.minTotalScore ?? 0))
+    .filter((row) => toNumber(row.readiness_score) >= (request.leadFilters?.minReadinessScore ?? 0))
+    .filter((row) => toNumber(row.activation_score) >= (request.leadFilters?.minActivationScore ?? 0))
+    .filter((row) => {
+      if (!parsedGrantCriteria?.frplMin) return true
+      return toNumber(row.frpl_percent) >= parsedGrantCriteria.frplMin
+    })
+    .filter((row) => {
+      if (!parsedGrantCriteria?.minorityMin) return true
+      return toNumber(row.minority_percent) >= parsedGrantCriteria.minorityMin
+    })
+    .filter((row) => {
+      if (!parsedGrantCriteria?.states || parsedGrantCriteria.states.length === 0) return true
+      return parsedGrantCriteria.states.includes(row.state)
+    })
+    .map((row) => {
+      const readiness = toNumber(row.readiness_score)
+      const alignment = toNumber(row.alignment_score)
+      const activation = toNumber(row.activation_score)
+      const branding = toNumber(row.branding_score)
+      const total = toNumber(row.total_score)
+      const engagementPenalty = suppressedSet.has(row.nces_id) ? 2 : 0
+      const eligibilityBoost =
+        (parsedGrantCriteria?.frplMin && toNumber(row.frpl_percent) >= parsedGrantCriteria.frplMin ? 0.5 : 0) +
+        (parsedGrantCriteria?.minorityMin && toNumber(row.minority_percent) >= parsedGrantCriteria.minorityMin ? 0.5 : 0)
+      const composite = Math.max(0, total + eligibilityBoost - engagementPenalty)
+      const confidence = Math.min(0.95, Math.max(0.2, composite / 10))
+      const confidenceBand = toConfidenceBand(confidence)
+      const sourceExcerpts: Array<{ documentUrl?: string | null; keyword: string; excerpt: string }> = []
+      const keywordMatches = (row.keyword_matches || {}) as Record<string, any[]>
+      for (const matches of Object.values(keywordMatches)) {
+        for (const match of Array.isArray(matches) ? matches.slice(0, 1) : []) {
+          sourceExcerpts.push({
+            documentUrl: match.source_doc || null,
+            keyword: match.keyword || 'signal',
+            excerpt: match.context || 'Signal matched in district documents.',
+          })
+        }
+      }
+
+      return {
+        district: {
+          id: row.nces_id,
+          ncesId: row.nces_id,
+          name: row.name,
+          state: row.state,
+          city: row.city,
+          county: null,
+          enrollment: row.enrollment,
+          gradesServed: null,
+          localeCode: null,
+          frplPercent: row.frpl_percent ? String(row.frpl_percent) : null,
+          minorityPercent: row.minority_percent ? String(row.minority_percent) : null,
+          websiteDomain: row.website_domain,
+          superintendentName: row.superintendent_name,
+          superintendentEmail: row.superintendent_email,
+          phone: null,
+          address: null,
+          lastScrapedAt: null,
+          scrapeStatus: null,
+          scrapeError: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        score: {
+          total,
+          readiness,
+          alignment,
+          activation,
+          branding,
+          composite,
+        },
+        why: {
+          ncesId: row.nces_id,
+          confidence,
+          confidenceBand,
+          summary: `Top match due to scoring and evidence signals in district documents.`,
+          topSignals: [
+            { signal: 'readiness_score', category: 'readiness', weight: readiness },
+            { signal: 'activation_score', category: 'activation', weight: activation },
+            { signal: 'total_score', category: 'semantic', weight: total, reason: 'Existing district relevance baseline' },
+          ] as SignalContribution[],
+          sourceExcerpts: sourceExcerpts.slice(0, 3),
+          dampeners: confidence < confidenceThreshold
+            ? [{ signal: 'low_confidence', impact: -0.2, reason: 'Insufficient matching depth across sources.' }]
+            : [],
+        },
+        actions: {
+          openDistrictSite: row.website_domain ? `https://${row.website_domain}` : null,
+          email: row.superintendent_email,
+          ncesId: row.nces_id,
+        },
+      }
+    })
+    .filter((row) => row.why.confidence >= Math.max(0.2, confidenceThreshold - 0.25))
+    .sort((a, b) => b.score.composite - a.score.composite)
+    .slice(0, requestedLimit)
+    .map((row, index) => {
+      // Precompute rich rationale for top 25, keep tail light and fetch on-demand.
+      if (index < 25) return row
+      return {
+        ...row,
+        why: {
+          ...row.why,
+          summary: 'Rationale available on demand. Click "Load full rationale".',
+          sourceExcerpts: [],
+        },
+      }
+    })
+
+  if (intent === 'insights_briefing') {
+    const stateRows = await db.execute(sql`
+      SELECT d.state, COUNT(*)::int as districts, AVG(s.total_score)::decimal as avg_score
+      FROM districts d
+      LEFT JOIN district_keyword_scores s ON d.nces_id = s.nces_id
+      WHERE d.nces_id IS NOT NULL
+      GROUP BY d.state
+      ORDER BY avg_score DESC NULLS LAST
+      LIMIT 3
+    `)
+    const topStates = (stateRows as any[])
+      .map((row) => `${row.state} (avg score ${toNumber(row.avg_score).toFixed(2)})`)
+      .join(', ')
+    const briefingSummary = topStates
+      ? `Top momentum states right now: ${topStates}.`
+      : 'No state momentum signal is available yet.'
+    districtsOut = districtsOut.slice(0, 10)
+    return {
+      intent,
+      confidenceThreshold,
+      explanation: `Weekly proactive briefing: ${briefingSummary}`,
+      grantCriteria: parsedGrantCriteria,
+      districts: districtsOut,
+      generatedAt: new Date().toISOString(),
+    }
+  }
+
+  const explanation =
+    intent === 'next_hottest_uncontacted'
+      ? 'Prioritized uncontacted districts using score and suppression logic.'
+      : intent === 'grant_match'
+        ? 'Matched districts against extracted and explicit grant criteria with confidence scoring.'
+        : 'Returned district matches based on existing district scoring and evidence.'
+
+  return {
+    intent,
+    confidenceThreshold,
+    explanation,
+    grantCriteria: parsedGrantCriteria,
+    districts: districtsOut,
+    generatedAt: new Date().toISOString(),
+  }
+}
+
+/**
+ * Compute an explainability payload for a single district.
+ * Used by on-demand "why this district" panel expansion.
+ */
+export async function getDistrictWhyDetails(
+  ncesId: string,
+  confidenceThreshold: number = 0.6
+) {
+  const db = getDb()
+  const rows = await db.execute(sql`
+    SELECT
+      d.nces_id,
+      d.name,
+      s.readiness_score,
+      s.alignment_score,
+      s.activation_score,
+      s.branding_score,
+      s.total_score,
+      s.keyword_matches
+    FROM districts d
+    LEFT JOIN district_keyword_scores s ON d.nces_id = s.nces_id
+    WHERE d.nces_id = ${ncesId}
+    LIMIT 1
+  `)
+
+  const row: any = rows[0]
+  if (!row) {
+    throw new Error('District not found')
+  }
+
+  const readiness = toNumber(row.readiness_score)
+  const alignment = toNumber(row.alignment_score)
+  const activation = toNumber(row.activation_score)
+  const branding = toNumber(row.branding_score)
+  const total = toNumber(row.total_score)
+  const confidence = Math.min(0.95, Math.max(0.2, total / 10))
+  const confidenceBand = toConfidenceBand(confidence)
+
+  const sourceExcerpts: Array<{ documentUrl?: string | null; keyword: string; excerpt: string }> = []
+  const keywordMatches = (row.keyword_matches || {}) as Record<string, any[]>
+  for (const matches of Object.values(keywordMatches)) {
+    for (const match of Array.isArray(matches) ? matches.slice(0, 2) : []) {
+      sourceExcerpts.push({
+        documentUrl: match.source_doc || null,
+        keyword: match.keyword || 'signal',
+        excerpt: match.context || 'Matched district signal.',
+      })
+    }
+  }
+
+  return {
+    ncesId: row.nces_id,
+    confidence,
+    confidenceBand,
+    summary:
+      confidence >= confidenceThreshold
+        ? `${row.name} has strong alignment to current query signals.`
+        : `${row.name} has partial alignment and should be manually reviewed.`,
+    topSignals: [
+      { signal: 'readiness_score', category: 'readiness', weight: readiness },
+      { signal: 'alignment_score', category: 'alignment', weight: alignment },
+      { signal: 'activation_score', category: 'activation', weight: activation },
+      { signal: 'branding_score', category: 'branding', weight: branding },
+      { signal: 'total_score', category: 'semantic', weight: total },
+    ] as SignalContribution[],
+    sourceExcerpts: sourceExcerpts.slice(0, 5),
+    dampeners:
+      confidence < confidenceThreshold
+        ? [{ signal: 'low_confidence', impact: -0.2, reason: 'Insufficient supporting depth.' }]
+        : [],
   }
 }
