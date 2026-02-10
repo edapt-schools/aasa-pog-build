@@ -9,6 +9,7 @@ import { useAllStateStats } from '../hooks/useStateStats'
 import { useTrending } from '../hooks/useTrending'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
+import { Link } from 'react-router-dom'
 
 /**
  * Insights Mode - Analytics dashboard for AASA leadership
@@ -55,6 +56,12 @@ export default function Insights() {
                 National overview and state-level analytics
               </p>
             </div>
+            <Link
+              to="/command?q=Generate a weekly strategic briefing and top states by momentum"
+              className="text-xs px-3 py-2 rounded border border-border hover:bg-accent/40"
+            >
+              Open briefing in Command Center
+            </Link>
             {overviewData && (
               <p className="text-xs text-muted-foreground">
                 Last updated: {new Date(overviewData.lastUpdated).toLocaleDateString()}
@@ -178,12 +185,20 @@ export default function Insights() {
                           {state.documentsCount.toLocaleString()}
                         </td>
                         <td className="text-center py-3 px-4">
-                          <button
-                            onClick={() => handleStateClick(state.stateCode)}
-                            className="text-primary hover:underline text-sm"
-                          >
-                            View
-                          </button>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleStateClick(state.stateCode)}
+                              className="text-primary hover:underline text-sm"
+                            >
+                              View
+                            </button>
+                            <Link
+                              to={`/command?q=next hottest uncontacted leads in ${state.stateCode}`}
+                              className="text-primary hover:underline text-sm"
+                            >
+                              Handoff
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     ))}
