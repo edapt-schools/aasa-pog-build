@@ -2,7 +2,7 @@ import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { requireAuth } from '../middleware/auth.js'
 import * as searchService from '../services/search.js'
-import type { SemanticSearchParams } from '@aasa-platform/shared'
+import type { CommandRequest, SemanticSearchParams } from '@aasa-platform/shared'
 
 const router = Router()
 
@@ -38,7 +38,7 @@ router.use(requireAuth)
  */
 router.post('/semantic', async (req: Request, res: Response) => {
   try {
-    const { query, limit, state, distanceThreshold } = req.body
+    const { query, limit, state, distanceThreshold, documentTypes, dateFrom, dateTo } = req.body
 
     // Validate required fields
     if (!query || typeof query !== 'string') {
@@ -69,6 +69,12 @@ router.post('/semantic', async (req: Request, res: Response) => {
       limit: limit ? Math.min(Number(limit), 100) : 20, // Max 100 results
       state: state || undefined,
       distanceThreshold: distanceThreshold || 0.5,
+      documentTypes:
+        Array.isArray(documentTypes) && documentTypes.length > 0
+          ? documentTypes.map((t: unknown) => String(t))
+          : undefined,
+      dateFrom: typeof dateFrom === 'string' ? dateFrom : undefined,
+      dateTo: typeof dateTo === 'string' ? dateTo : undefined,
     }
 
     // Execute search
@@ -89,6 +95,39 @@ router.post('/semantic', async (req: Request, res: Response) => {
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to execute search',
+    })
+  }
+})
+
+/**
+ * POST /api/search/command
+ * Unified command endpoint for AI-first search and actions.
+ */
+router.post('/command', async (req: Request, res: Response) => {
+  try {
+    const body = req.body as CommandRequest
+    if (!body?.prompt || typeof body.prompt !== 'string' || body.prompt.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Prompt is required',
+      })
+    }
+
+    const response = await searchService.runCommand({
+      ...body,
+      prompt: body.prompt.trim(),
+      confidenceThreshold:
+        body.confidenceThreshold !== undefined
+          ? Math.min(0.95, Math.max(0.2, Number(body.confidenceThreshold)))
+          : 0.6,
+    })
+
+    res.json(response)
+  } catch (error) {
+    console.error('Command search error:', error)
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to execute command request',
     })
   }
 })
@@ -200,6 +239,41 @@ router.get('/evidence/:ncesId', async (req: Request, res: Response) => {
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to retrieve keyword evidence',
+    })
+  }
+})
+
+/**
+ * GET /api/search/why/:ncesId
+ * On-demand district explainability payload.
+ */
+router.get('/why/:ncesId', async (req: Request, res: Response) => {
+  try {
+    const ncesId = req.params.ncesId as string
+    const thresholdRaw = req.query.confidenceThreshold
+    const confidenceThreshold =
+      thresholdRaw !== undefined ? Math.min(0.95, Math.max(0.2, Number(thresholdRaw))) : 0.6
+
+    if (!ncesId || !/^\\d{7}$/.test(ncesId)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Valid NCES ID is required (7 digits)',
+      })
+    }
+
+    const response = await searchService.getDistrictWhyDetails(ncesId, confidenceThreshold)
+    res.json(response)
+  } catch (error: any) {
+    console.error('District why-details error:', error)
+    if (error.message?.includes('not found')) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'District not found',
+      })
+    }
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to retrieve explainability payload',
     })
   }
 })
