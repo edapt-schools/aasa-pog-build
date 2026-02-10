@@ -6,6 +6,7 @@ import AuthCallback from './pages/AuthCallback'
 import Discovery from './pages/Discovery'
 import Grants from './pages/Grants'
 import Insights from './pages/Insights'
+import CommandCenter from './pages/CommandCenter'
 
 /**
  * Protected Route Component
@@ -32,7 +33,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/discovery" replace />,
+    element: <Navigate to="/command" replace />,
   },
   {
     path: '/login',
@@ -49,6 +50,10 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      {
+        path: '/command',
+        element: <CommandCenter />,
+      },
       {
         path: '/discovery',
         element: <Discovery />,
