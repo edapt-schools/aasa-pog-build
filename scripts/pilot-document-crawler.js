@@ -22,6 +22,7 @@
  *   --concurrency N    Number of districts to crawl in parallel (default: 5)
  *   --state XX         Filter by state (e.g., CA, TX)
  *   --skip-existing    Skip districts that already have documents
+ *   --skip-attempted   Skip districts that have already been attempted (in crawl log)
  *
  * Examples:
  *   node scripts/pilot-document-crawler.js                          # Default: 200 districts, 5 concurrent
@@ -85,7 +86,8 @@ function parseArgs() {
     limit: CONFIG.PILOT_SIZE,
     state: null,
     concurrency: CONFIG.CONCURRENCY,
-    skipExisting: false
+    skipExisting: false,
+    skipAttempted: false
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -100,6 +102,8 @@ function parseArgs() {
       i++;
     } else if (args[i] === '--skip-existing') {
       config.skipExisting = true;
+    } else if (args[i] === '--skip-attempted') {
+      config.skipAttempted = true;
     }
   }
 
@@ -608,6 +612,7 @@ async function main() {
   console.log(`  Concurrency: ${config.concurrency} districts in parallel`);
   console.log(`  State filter: ${config.state || 'All'}`);
   console.log(`  Skip existing: ${config.skipExisting}`);
+  console.log(`  Skip attempted: ${config.skipAttempted}`);
   console.log(`  Timeout: ${CONFIG.TIMEOUT_MS}ms`);
   console.log(`  Rate limit: ${CONFIG.RATE_LIMIT_MS}ms between requests`);
   console.log(`  PDF extraction: ${pdfParse ? 'Enabled' : 'Disabled'}`);
@@ -621,7 +626,7 @@ async function main() {
   let query = `
     SELECT s.nces_id, s.state, s.district_name, s.website_url, s.data_quality_tier, s.enrollment
     FROM superintendent_directory s
-    WHERE s.data_quality_tier IN ('A', 'B')
+    WHERE s.data_quality_tier IN ('A', 'B', 'C')
       AND s.website_url IS NOT NULL
       AND s.website_url != ''
       AND s.website_url NOT LIKE '%facebook%'
@@ -633,6 +638,14 @@ async function main() {
     query += `
       AND NOT EXISTS (
         SELECT 1 FROM district_documents d WHERE d.nces_id = s.nces_id
+      )
+    `;
+  }
+
+  if (config.skipAttempted) {
+    query += `
+      AND NOT EXISTS (
+        SELECT 1 FROM document_crawl_log cl WHERE cl.nces_id = s.nces_id
       )
     `;
   }

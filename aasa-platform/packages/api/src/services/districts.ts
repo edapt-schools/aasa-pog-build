@@ -45,9 +45,41 @@ export async function listDistricts(
     }
   }
 
-  // Name search (case-insensitive)
+  // Name / superintendent search (case-insensitive)
   if (params.search) {
-    conditions.push(ilike(schema.districts.name, `%${params.search}%`))
+    conditions.push(
+      sql`(${ilike(schema.districts.name, `%${params.search}%`)} OR ${ilike(schema.districts.superintendentName, `%${params.search}%`)})`
+    )
+  }
+
+  // FRPL % range
+  if (params.frplMin !== undefined) {
+    conditions.push(sql`${schema.districts.frplPercent}::decimal >= ${params.frplMin}`)
+  }
+  if (params.frplMax !== undefined) {
+    conditions.push(sql`${schema.districts.frplPercent}::decimal <= ${params.frplMax}`)
+  }
+
+  // Minority % range
+  if (params.minorityMin !== undefined) {
+    conditions.push(sql`${schema.districts.minorityPercent}::decimal >= ${params.minorityMin}`)
+  }
+  if (params.minorityMax !== undefined) {
+    conditions.push(sql`${schema.districts.minorityPercent}::decimal <= ${params.minorityMax}`)
+  }
+
+  // Locale type (NCES codes: 11-13=city, 21-23=suburb, 31-33=town, 41-43=rural)
+  if (params.localeType && params.localeType.length > 0) {
+    const localePrefixes: Record<string, string[]> = {
+      city: ['11', '12', '13'],
+      suburb: ['21', '22', '23'],
+      town: ['31', '32', '33'],
+      rural: ['41', '42', '43'],
+    }
+    const codes = params.localeType.flatMap((t) => localePrefixes[t] || [])
+    if (codes.length > 0) {
+      conditions.push(inArray(schema.districts.localeCode, codes))
+    }
   }
 
   // Outreach tier (multi-select)

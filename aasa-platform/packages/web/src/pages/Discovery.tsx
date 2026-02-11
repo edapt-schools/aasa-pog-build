@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
 import { useDistricts } from '../hooks/useDistricts'
 import { FilterPanel } from '../components/FilterPanel'
 import { DistrictGrid } from '../components/DistrictGrid'
@@ -12,7 +11,6 @@ import { Button } from '../components/ui/button'
 import type { ListDistrictsParams, District } from '@aasa-platform/shared'
 
 export default function Discovery() {
-  const { user, logout } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Mobile filter drawer state
@@ -27,6 +25,10 @@ export default function Discovery() {
       limit: parseInt(searchParams.get('limit') || '50'),
       offset: parseInt(searchParams.get('offset') || '0'),
     }
+
+    // Search
+    const search = searchParams.get('search')
+    if (search) filters.search = search
 
     // State filter (multi-select)
     const states = searchParams.getAll('state')
@@ -48,18 +50,23 @@ export default function Discovery() {
     if (hasSuperintendent === 'true') filters.hasSuperintendent = true
     if (hasSuperintendent === 'false') filters.hasSuperintendent = false
 
-    // Keyword score filters
-    const readinessMin = searchParams.get('readinessMin')
-    if (readinessMin) filters.readinessScoreMin = parseInt(readinessMin)
+    // FRPL % range
+    const frplMin = searchParams.get('frplMin')
+    if (frplMin) filters.frplMin = parseInt(frplMin)
 
-    const alignmentMin = searchParams.get('alignmentMin')
-    if (alignmentMin) filters.alignmentScoreMin = parseInt(alignmentMin)
+    const frplMax = searchParams.get('frplMax')
+    if (frplMax) filters.frplMax = parseInt(frplMax)
 
-    const activationMin = searchParams.get('activationMin')
-    if (activationMin) filters.activationScoreMin = parseInt(activationMin)
+    // Minority % range
+    const minorityMin = searchParams.get('minorityMin')
+    if (minorityMin) filters.minorityMin = parseInt(minorityMin)
 
-    const brandingMin = searchParams.get('brandingMin')
-    if (brandingMin) filters.brandingScoreMin = parseInt(brandingMin)
+    const minorityMax = searchParams.get('minorityMax')
+    if (minorityMax) filters.minorityMax = parseInt(minorityMax)
+
+    // Locale type (multi-select)
+    const localeTypes = searchParams.getAll('localeType')
+    if (localeTypes.length > 0) filters.localeType = localeTypes
 
     return filters
   }, [searchParams])
@@ -77,6 +84,9 @@ export default function Discovery() {
     params.set('limit', filters.limit?.toString() || '50')
     params.set('offset', filters.offset?.toString() || '0')
 
+    // Search
+    if (filters.search) params.set('search', filters.search)
+
     // States (multi-select)
     filters.state?.forEach((state) => params.append('state', state))
 
@@ -92,11 +102,14 @@ export default function Discovery() {
       params.set('hasSuperintendent', filters.hasSuperintendent.toString())
     }
 
-    // Keyword scores
-    if (filters.readinessScoreMin) params.set('readinessMin', filters.readinessScoreMin.toString())
-    if (filters.alignmentScoreMin) params.set('alignmentMin', filters.alignmentScoreMin.toString())
-    if (filters.activationScoreMin) params.set('activationMin', filters.activationScoreMin.toString())
-    if (filters.brandingScoreMin) params.set('brandingMin', filters.brandingScoreMin.toString())
+    // Demographics
+    if (filters.frplMin) params.set('frplMin', filters.frplMin.toString())
+    if (filters.frplMax) params.set('frplMax', filters.frplMax.toString())
+    if (filters.minorityMin) params.set('minorityMin', filters.minorityMin.toString())
+    if (filters.minorityMax) params.set('minorityMax', filters.minorityMax.toString())
+
+    // Locale types (multi-select)
+    filters.localeType?.forEach((locale) => params.append('localeType', locale))
 
     setSearchParams(params, { replace: true })
   }, [filters, setSearchParams])
@@ -164,55 +177,36 @@ export default function Discovery() {
   }, [selectedDistrictId, isFilterDrawerOpen])
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-background border-b border-border">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
-          <div className="flex items-center gap-4">
-            {/* Mobile filter toggle */}
+    <div className="min-h-full bg-background">
+      {/* Sub-header with title + actions */}
+      <div className="bg-background px-4 sm:px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsFilterDrawerOpen(!isFilterDrawerOpen)}
-              className="lg:hidden"
+              className="lg:hidden min-h-[36px] min-w-[36px]"
               aria-label="Toggle filters"
             >
-              {isFilterDrawerOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isFilterDrawerOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
-
             <div>
-              <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
-                Discovery Mode
-              </h1>
-              <p className="text-sm text-muted-foreground hidden sm:block">
-                Find and filter districts for outreach
+              <h1 className="text-lg font-semibold text-foreground leading-tight">Pipeline</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block mt-0.5">
+                {data ? `${data.pagination.total.toLocaleString()} districts` : 'Loading...'}
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 sm:gap-4">
-            <ExportButton
-              data={data?.data}
-              filename="districts"
-              label="Export"
-              size="sm"
-            />
-            <span className="text-sm text-muted-foreground hidden md:block">{user?.email}</span>
-            <button
-              onClick={logout}
-              className="px-3 sm:px-4 py-2 bg-card border border-border rounded-lg text-sm hover:bg-muted transition-colors"
-            >
-              Sign out
-            </button>
-          </div>
+          <ExportButton data={data?.data} filename="districts" label="Export" size="sm" />
         </div>
-      </header>
+      </div>
 
       {/* Main content */}
       <div className="flex">
         {/* Sidebar - Desktop */}
-        <aside className="hidden lg:block w-80 border-r border-border h-[calc(100vh-73px)] sticky top-[73px] overflow-y-auto">
-          <div className="p-4">
+        <aside className="hidden lg:block w-[340px] shrink-0 h-[calc(100vh-104px)] sticky top-0 overflow-y-auto bg-card/50">
+          <div className="px-5 py-5">
             <FilterPanel
               filters={filters}
               onFilterChange={handleFilterChange}
@@ -232,8 +226,8 @@ export default function Discovery() {
             />
 
             {/* Drawer */}
-            <div className="fixed left-0 top-[73px] bottom-0 w-80 bg-background border-r border-border z-50 overflow-y-auto lg:hidden">
-              <div className="p-4">
+            <div className="fixed left-0 top-0 bottom-0 w-[340px] bg-background z-50 overflow-y-auto lg:hidden shadow-xl">
+              <div className="px-5 py-5">
                 <FilterPanel
                   filters={filters}
                   onFilterChange={handleFilterChange}

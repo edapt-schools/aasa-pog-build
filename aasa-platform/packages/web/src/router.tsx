@@ -15,7 +15,13 @@ import CommandCenter from './pages/CommandCenter'
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
+  // Allow localhost access without auth for local UI development
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
   if (loading) {
+    // On localhost, don't block on auth loading — show the UI immediately
+    if (isLocalDev) return <>{children}</>
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
@@ -23,7 +29,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!user) {
+  if (!user && !isLocalDev) {
     return <Navigate to="/login" replace />
   }
 
