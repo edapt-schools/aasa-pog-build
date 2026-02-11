@@ -411,7 +411,8 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
   const confidenceThreshold = request.confidenceThreshold ?? 0.6
   const lowerPrompt = prompt.toLowerCase()
   const requestedLimit = request.leadFilters?.limit || 25
-  const candidateScanLimit = Math.max(requestedLimit * 20, 500)
+  const queryEmbedding = await generateEmbedding(prompt)
+  const embeddingString = JSON.stringify(queryEmbedding)
 
   const isLeadIntent =
     lowerPrompt.includes('next hottest') ||
@@ -457,6 +458,16 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
   }
 
   const rows = await db.execute(sql`
+    WITH semantic AS (
+      SELECT
+        dd.nces_id,
+        MAX(1 - ((e.embedding <=> ${embeddingString}::vector) / 2.0))::decimal AS semantic_max,
+        AVG(1 - ((e.embedding <=> ${embeddingString}::vector) / 2.0))::decimal AS semantic_avg,
+        COUNT(*)::int AS semantic_hits
+      FROM document_embeddings e
+      JOIN district_documents dd ON e.document_id = dd.id
+      GROUP BY dd.nces_id
+    )
     SELECT
       d.nces_id,
       d.name,
@@ -473,12 +484,15 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       s.activation_score,
       s.branding_score,
       s.total_score,
-      s.keyword_matches
+      s.keyword_matches,
+      COALESCE(semantic.semantic_max, 0)::decimal AS semantic_max,
+      COALESCE(semantic.semantic_avg, 0)::decimal AS semantic_avg,
+      COALESCE(semantic.semantic_hits, 0)::int AS semantic_hits
     FROM districts d
     LEFT JOIN district_keyword_scores s ON d.nces_id = s.nces_id
+    LEFT JOIN semantic ON d.nces_id = semantic.nces_id
     WHERE d.nces_id IS NOT NULL
-    ORDER BY s.total_score DESC NULLS LAST
-    LIMIT ${candidateScanLimit}
+    ORDER BY semantic_max DESC, s.total_score DESC NULLS LAST
   `)
 
   const rawRows = rows as any[]
@@ -514,12 +528,16 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       const activation = toNumber(row.activation_score)
       const branding = toNumber(row.branding_score)
       const total = toNumber(row.total_score)
+      const semanticMax = toNumber(row.semantic_max)
+      const semanticAvg = toNumber(row.semantic_avg)
+      const semanticHits = toNumber(row.semantic_hits)
       const engagementPenalty = suppressedSet.has(row.nces_id) ? 2 : 0
       const eligibilityBoost =
         (parsedGrantCriteria?.frplMin && toNumber(row.frpl_percent) >= parsedGrantCriteria.frplMin ? 0.5 : 0) +
         (parsedGrantCriteria?.minorityMin && toNumber(row.minority_percent) >= parsedGrantCriteria.minorityMin ? 0.5 : 0)
-      const composite = Math.max(0, total + eligibilityBoost - engagementPenalty)
-      const confidence = Math.min(0.95, Math.max(0.2, composite / 10))
+      const semanticBoost = (semanticMax * 4) + Math.min(2, Math.log10(semanticHits + 1))
+      const composite = Math.max(0, total + semanticBoost + eligibilityBoost - engagementPenalty)
+      const confidence = Math.min(0.98, Math.max(0.2, (composite + semanticAvg * 2) / 12))
       const confidenceBand = toConfidenceBand(confidence)
       const sourceExcerpts: Array<{ documentUrl?: string | null; keyword: string; excerpt: string }> = []
       const keywordMatches = (row.keyword_matches || {}) as Record<string, any[]>
@@ -571,6 +589,7 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
           confidenceBand,
           summary: `Top match due to scoring and evidence signals in district documents.`,
           topSignals: [
+            { signal: 'semantic_max', category: 'semantic', weight: semanticMax, reason: `Top semantic similarity across ${semanticHits} matching chunks` },
             { signal: 'readiness_score', category: 'readiness', weight: readiness },
             { signal: 'activation_score', category: 'activation', weight: activation },
             { signal: 'total_score', category: 'semantic', weight: total, reason: 'Existing district relevance baseline' },
@@ -605,7 +624,7 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
 
   const reasoningSteps = [
     `Intent classified as "${intent}".`,
-    `Scanned ${rawRows.length} candidate districts (requested ${requestedLimit}, scan window ${candidateScanLimit}).`,
+    `Scanned full corpus: ${rawRows.length} districts with live semantic aggregation over all embeddings.`,
     `Suppressed ${suppressedSet.size} previously engaged districts in last ${suppressionDays} days.`,
     `Candidates after suppression: ${afterSuppression.length}.`,
     `After state and score criteria: ${afterScoreThresholds.length}.`,
@@ -617,7 +636,7 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
     prompt,
     intent,
     requestedLimit,
-    candidateScanLimit,
+    scanMode: 'full_corpus_embeddings_and_scores',
     confidenceThreshold,
     suppressionDays,
     suppressedCount: suppressedSet.size,
