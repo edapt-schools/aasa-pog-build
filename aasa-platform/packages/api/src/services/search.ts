@@ -410,6 +410,8 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
   const prompt = request.prompt.trim()
   const confidenceThreshold = request.confidenceThreshold ?? 0.6
   const lowerPrompt = prompt.toLowerCase()
+  const requestedLimit = request.leadFilters?.limit || 25
+  const candidateScanLimit = Math.max(requestedLimit * 20, 500)
 
   const isLeadIntent =
     lowerPrompt.includes('next hottest') ||
@@ -476,19 +478,21 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
     LEFT JOIN district_keyword_scores s ON d.nces_id = s.nces_id
     WHERE d.nces_id IS NOT NULL
     ORDER BY s.total_score DESC NULLS LAST
-    LIMIT ${request.leadFilters?.limit || 120}
+    LIMIT ${candidateScanLimit}
   `)
 
-  const requestedLimit = request.leadFilters?.limit || 25
-  let districtsOut = (rows as any[])
-    .filter((row) => row.nces_id && !suppressedSet.has(row.nces_id))
-    .filter((row) => {
+  const rawRows = rows as any[]
+  const withIds = rawRows.filter((row) => row.nces_id)
+  const afterSuppression = withIds.filter((row) => !suppressedSet.has(row.nces_id))
+  const afterState = afterSuppression.filter((row) => {
       if (!request.leadFilters?.states || request.leadFilters.states.length === 0) return true
       return request.leadFilters.states.includes(row.state)
     })
+  const afterScoreThresholds = afterState
     .filter((row) => toNumber(row.total_score) >= (request.leadFilters?.minTotalScore ?? 0))
     .filter((row) => toNumber(row.readiness_score) >= (request.leadFilters?.minReadinessScore ?? 0))
     .filter((row) => toNumber(row.activation_score) >= (request.leadFilters?.minActivationScore ?? 0))
+  const afterGrantCriteria = afterScoreThresholds
     .filter((row) => {
       if (!parsedGrantCriteria?.frplMin) return true
       return toNumber(row.frpl_percent) >= parsedGrantCriteria.frplMin
@@ -501,6 +505,9 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       if (!parsedGrantCriteria?.states || parsedGrantCriteria.states.length === 0) return true
       return parsedGrantCriteria.states.includes(row.state)
     })
+  const preConfidenceRows = afterGrantCriteria
+
+  let districtsOut = preConfidenceRows
     .map((row) => {
       const readiness = toNumber(row.readiness_score)
       const alignment = toNumber(row.alignment_score)
@@ -596,6 +603,33 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       }
     })
 
+  const reasoningSteps = [
+    `Intent classified as "${intent}".`,
+    `Scanned ${rawRows.length} candidate districts (requested ${requestedLimit}, scan window ${candidateScanLimit}).`,
+    `Suppressed ${suppressedSet.size} previously engaged districts in last ${suppressionDays} days.`,
+    `Candidates after suppression: ${afterSuppression.length}.`,
+    `After state and score criteria: ${afterScoreThresholds.length}.`,
+    `After grant criteria: ${afterGrantCriteria.length}.`,
+    `After confidence threshold: ${districtsOut.length}.`,
+  ]
+
+  console.info('[command-search]', {
+    prompt,
+    intent,
+    requestedLimit,
+    candidateScanLimit,
+    confidenceThreshold,
+    suppressionDays,
+    suppressedCount: suppressedSet.size,
+    rawRows: rawRows.length,
+    withIds: withIds.length,
+    afterSuppression: afterSuppression.length,
+    afterState: afterState.length,
+    afterScoreThresholds: afterScoreThresholds.length,
+    afterGrantCriteria: afterGrantCriteria.length,
+    finalResults: districtsOut.length,
+  })
+
   if (intent === 'insights_briefing') {
     const stateRows = await db.execute(sql`
       SELECT d.state, COUNT(*)::int as districts, AVG(s.total_score)::decimal as avg_score
@@ -617,6 +651,10 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       intent,
       confidenceThreshold,
       explanation: `Weekly proactive briefing: ${briefingSummary}`,
+      reasoning: {
+        summary: 'Generated from keyword-score ranking plus engagement suppression and confidence gating.',
+        steps: reasoningSteps,
+      },
       grantCriteria: parsedGrantCriteria,
       districts: districtsOut,
       generatedAt: new Date().toISOString(),
@@ -634,6 +672,10 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
     intent,
     confidenceThreshold,
     explanation,
+    reasoning: {
+      summary: 'Generated from keyword-score ranking plus engagement suppression and confidence gating.',
+      steps: reasoningSteps,
+    },
     grantCriteria: parsedGrantCriteria,
     districts: districtsOut,
     generatedAt: new Date().toISOString(),
