@@ -393,6 +393,10 @@ export interface CommandResponse {
   intent: CommandIntent
   confidenceThreshold: number
   explanation: string
+  reasoning?: {
+    summary: string
+    steps: string[]
+  }
   grantCriteria?: GrantCriteria
   districts: CommandDistrictResult[]
   generatedAt: string

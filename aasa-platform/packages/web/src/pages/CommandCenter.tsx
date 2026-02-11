@@ -8,6 +8,7 @@ import {
   Mail,
   Phone,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   Check,
   Plus,
@@ -232,14 +233,24 @@ function PromptInput({
 }
 
 /** AI Summary Card */
-function AISummary({ text, grantCriteria }: { text: string; grantCriteria?: GrantCriteria }) {
+function AISummary({
+  text,
+  grantCriteria,
+  reasoning,
+}: {
+  text: string
+  grantCriteria?: GrantCriteria
+  reasoning?: { summary: string; steps: string[] }
+}) {
+  const [showThinking, setShowThinking] = useState(false)
+
   return (
     <div className="rounded-xl border border-accent/20 bg-accent/5 p-4">
       <div className="flex items-start gap-3">
         <div className="w-6 h-6 rounded-full bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
           <Zap className="w-3.5 h-3.5 text-accent" />
         </div>
-        <div className="space-y-2 min-w-0">
+        <div className="space-y-2 min-w-0 w-full">
           <p className="text-sm text-foreground leading-relaxed">{text}</p>
           {grantCriteria && (grantCriteria.frplMin || grantCriteria.minorityMin) && (
             <div className="flex flex-wrap gap-2">
@@ -252,6 +263,30 @@ function AISummary({ text, grantCriteria }: { text: string; grantCriteria?: Gran
                 <span className="inline-flex items-center gap-1 rounded-md bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
                   Minority &ge; {grantCriteria.minorityMin}%
                 </span>
+              )}
+            </div>
+          )}
+          {reasoning && (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setShowThinking((v) => !v)}
+                className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
+              >
+                {showThinking ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                {showThinking ? 'Hide ranking logic' : 'Show ranking logic'}
+              </button>
+              {showThinking && (
+                <div className="mt-2 rounded-lg border border-accent/20 bg-background/70 p-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">{reasoning.summary}</p>
+                  <ul className="space-y-1">
+                    {reasoning.steps.map((step, idx) => (
+                      <li key={`${step}-${idx}`} className="text-xs text-foreground leading-relaxed">
+                        {step}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           )}
@@ -686,6 +721,7 @@ export default function CommandCenter() {
   const [engagementEvents, setEngagementEvents] = useState<EngagementEvent[]>(() => getStoredEvents())
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [latestExplanation, setLatestExplanation] = useState('')
+  const [latestReasoning, setLatestReasoning] = useState<{ summary: string; steps: string[] } | undefined>()
   const [latestResults, setLatestResults] = useState<CommandDistrictResult[]>([])
   const [latestGrantCriteria, setLatestGrantCriteria] = useState<GrantCriteria | undefined>()
   const { data, loading, error, run } = useCommandSearch()
@@ -807,6 +843,7 @@ export default function CommandCenter() {
   useEffect(() => {
     if (!data || data.generatedAt === lastResponseAt) return
     setLatestExplanation(data.explanation)
+    setLatestReasoning(data.reasoning)
     setLatestResults(data.districts)
     setLatestGrantCriteria(data.grantCriteria)
     setLastResponseAt(data.generatedAt)
@@ -949,7 +986,7 @@ export default function CommandCenter() {
           {!loading && latestResults.length > 0 && (
             <>
               {/* AI Summary */}
-              <AISummary text={latestExplanation} grantCriteria={latestGrantCriteria} />
+              <AISummary text={latestExplanation} grantCriteria={latestGrantCriteria} reasoning={latestReasoning} />
 
               {/* Grant criteria overrides */}
               {(criteriaOverrides.frplMin !== undefined || criteriaOverrides.minorityMin !== undefined) && (
@@ -1069,7 +1106,7 @@ export default function CommandCenter() {
 
           {/* Empty results */}
           {!loading && !error && hasSearched && latestResults.length === 0 && latestExplanation && (
-            <AISummary text={latestExplanation} />
+            <AISummary text={latestExplanation} reasoning={latestReasoning} />
           )}
         </div>
       )}
