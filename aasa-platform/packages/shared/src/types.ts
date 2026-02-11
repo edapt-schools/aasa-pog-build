@@ -77,6 +77,11 @@ export interface ListDistrictsParams {
   enrollmentMax?: number
   outreachTier?: string[] // ['tier1', 'tier2', 'tier3']
   hasSuperintendent?: boolean
+  frplMin?: number // Free/Reduced Lunch % minimum (0-100)
+  frplMax?: number // Free/Reduced Lunch % maximum (0-100)
+  minorityMin?: number // Minority % minimum (0-100)
+  minorityMax?: number // Minority % maximum (0-100)
+  localeType?: string[] // ['city', 'suburb', 'town', 'rural']
 
   // Keyword score filters (min thresholds)
   readinessScoreMin?: number

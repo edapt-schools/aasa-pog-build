@@ -6,12 +6,13 @@ This file is read by Claude Code at session start. It contains project rules, co
 
 Building a database of all ~19,500 US public school districts with superintendent contact information for AASA (The School Superintendents Association).
 
-**Current state**: 61.4% superintendent coverage (12,026 / 19,595 districts)
-**Goal**: 90%+ coverage
+**Current state**: 98.4% superintendent coverage (19,281 / 19,595 districts) -- GOAL MET
+**Phase 2 state**: 88.5% document coverage (17,342 / 19,595 districts), 175,138 documents
 
 **Key Reference Docs:**
 - `docs/STATE_SOURCES_GUIDE.md` - Where to find data for each state
 - `docs/CRAWL_WORKFLOW.md` - Document crawling pipeline (Phase 2)
+- `docs/CRAWL_RECOVERY_GUIDE.md` - **NEW: Failed district recovery procedures**
 - `logs/SESSION_LOG_2026-02-01.md` - Current session status and handoff notes
 
 ## Database Connection
@@ -57,7 +58,7 @@ postgresql://postgres:UMK-egr6gan5vdb.nzx@db.wdvpjyymztrebwaiaidu.supabase.co:54
 
 ```
 SOURCE LAYER (immutable)
-├── districts (NCES baseline - 19,640 records)
+├── districts (NCES baseline - 19,595 records)
 ├── ccd_staff_data (CCD enrichment)
 └── state_registry_districts (state DoE data)
            │
@@ -93,68 +94,17 @@ name.toLowerCase()
   .replace(/\s+/g, ' ')
 ```
 
-## Current Database State (Updated Feb 5, 2026)
+## Current Database State (Updated Feb 9, 2026)
 
-**Overall: 61.4% coverage (12,026 / 19,595 districts)**
+**Superintendent coverage: 98.4% (19,281 / 19,595 districts) -- GOAL EXCEEDED**
 
 | Table | Records |
 |-------|---------|
 | districts | 19,595 |
-| superintendent_directory | 12,026 |
+| superintendent_directory | 19,281 |
 | district_matches | 11,653 |
-
-### States by Coverage (45 states with data)
-
-| State | Coverage | Loaded/Expected | Notes |
-|-------|----------|-----------------|-------|
-| AK | 100% | 53/53 | Complete |
-| HI | 100% | 1/1 | Single statewide district |
-| KY | 98.9% | 175/177 | Excellent |
-| TX | 96.4% | 1185/1229 | Excellent |
-| MO | 95.8% | 541/565 | Excellent |
-| IA | 95.0% | 325/342 | Excellent |
-| MN | 92.9% | 525/565 | Excellent |
-| OK | 92.0% | 532/578 | Excellent |
-| MD | 92.0% | 23/25 | Excellent |
-| TN | 91.9% | 136/148 | Excellent |
-| WI | 90.3% | 420/465 | Excellent |
-| SD | 89.1% | 147/165 | Gap = cooperatives |
-| WA | 88.6% | 302/341 | Good |
-| WV | 87.7% | 57/65 | County school districts |
-| NE | 86.3% | 240/278 | Good |
-| OR | 86.5% | 192/222 | Good |
-| PA | 85.3% | 669/784 | Good |
-| NV | 85.0% | 17/20 | Gap = charters |
-| MS | 84.9% | 129/152 | Good |
-| KS | 83.1% | 280/337 | Good |
-| AR | 82.8% | 251/303 | Good |
-| IL | 82.7% | 850/1028 | Good |
-| SC | 80.6% | 75/93 | Good |
-| FL | 78.6% | 66/84 | Acceptable |
-| ND | 74.9% | 164/219 | Acceptable |
-| NJ | 70.5% | 490/695 | Acceptable |
-| IN | 65.6% | 290/442 | Needs improvement |
-| MA | 63.2% | 266/421 | Needs improvement |
-| NY | 61.2% | 667/1090 | Needs improvement |
-| GA | 58.0% | 145/250 | Needs improvement |
-| VA | 58.7% | 122/208 | Needs improvement |
-| MT | 57.6% | 273/474 | Gap = small rurals |
-| NM | 56.2% | 86/153 | Needs improvement |
-| CA | 55.8% | 1322/2368 | Large gap |
-| OH | 55.4% | 579/1045 | Needs improvement |
-| RI | 53.7% | 36/67 | Charter data fragmented |
-| DE | 42.2% | 19/45 | Charter leader data issue |
-| WY | 37.7% | 23/61 | Gap = BOCES |
-| LA | 37.3% | 69/185 | Needs re-collection |
-| VT | 29.3% | 55/188 | SUs oversee member districts |
-| NC | 27.8% | 98/352 | PRIORITY RE-COLLECTION |
-| UT | 26.8% | 41/153 | Needs re-collection |
-| NH | 16.7% | 35/210 | Needs re-collection |
-| AL | 12.8% | 20/156 | Needs re-collection |
-| DC | 1.4% | 1/71 | Charter LEA leaders only in PDF |
-
-### States at 0% (7 states + 5 territories)
-MI, ID, ME, CO, AZ, CT + territories (GU, PR, AS, VI, MP)
+| district_documents | 175,138 |
+| url_corrections | 387 (validated) |
 
 ## Workflow Guidance
 
@@ -174,56 +124,128 @@ MI, ID, ME, CO, AZ, CT + territories (GU, PR, AS, VI, MP)
 node scripts/db-status.js
 ```
 
+---
+
 ## Phase 2: Document Crawling & Semantic Search
 
-**Status:** 275 districts crawled, 3,597 documents, 62MB text extracted
+### Current Status (Updated Feb 9, 2026)
 
-### ⚡ RECOMMENDED: Automated Pipeline (Hands-Free)
+| Metric | Value |
+|--------|-------|
+| Districts with documents | **17,342** (88.5% of all districts) |
+| Districts attempted | 19,280 |
+| Districts not yet crawled | 0 (all attempted) |
+| Total documents | 175,138 |
+| Keyword scores computed | ✅ Complete (17,342 districts) |
+| Embeddings generated | ✅ **Complete** (83,194 embeddings, 38,239 unique docs) |
+| Embedding model | `text-embedding-3-small` (1536 dims) |
+| Embedding cost | $1.40 total |
+| URL corrections discovered | 387 (validated, in golden table) |
 
-**Use this for large batches (200+ districts):**
-```bash
-node scripts/automated-crawl-pipeline.js --limit 500 --concurrency 10 --skip-existing
-```
+### Recovery Pipeline Results (Feb 9, 2026)
 
-**What it does:**
-1. Crawls districts with parallel execution
-2. Fixes obvious URL issues (redirects)
-3. Skips aggressive retry (too slow - flags failures for manual research)
-4. Computes keyword scores
-5. Generates embeddings (optional with --no-embeddings)
-6. Analyzes results
+Ran 6-strategy waterfall recovery on all failed/missing districts:
 
-**This is the workflow that should run continuously for the remaining 17,000 districts.**
+| Mode | Succeeded | Failed | Rate | New Docs |
+|------|-----------|--------|------|----------|
+| failed-retry | 563 | 619 | 47.6% | 5,395 |
+| discover-urls | 442 | 1,287 | 25.6% | 3,899 |
+| empty-text | 246 | 24 | 91.1% | 1,239 |
+| **TOTAL** | **1,251** | **1,930** | — | **10,533** |
+
+Recovery strategies that worked:
+- `cross_reference`: 319 districts (finding working URLs from other source tables)
+- `pattern_match`: 531 districts (generating k12.state.us, schools.org, etc.)
+- `email_domain`: 101 districts (extracting website from superintendent email)
+- `web_search`: 8 districts (DuckDuckGo -- underperformed, see notes)
+- `url_fix`: 4 districts (fixing typos in URLs)
+
+### Remaining 1,906 Failed Districts
+
+| Category | Count | Notes |
+|----------|-------|-------|
+| All 6 strategies failed | 1,530 | 1,281 had no URL data at all |
+| 404 Not Found | 180 | URL exists but wrong path |
+| 403 Forbidden | 80 | Blocking crawlers (incl. Baltimore County, Atlanta) |
+| Timeout | 20 | May need headless browser |
+| SSL/Other | 96 | Mixed issues |
+
+Key observations:
+- **32 NYC Geographic Districts** (admin subdivisions, all share schools.nyc.gov)
+- **43 BIE schools** (Bureau of Indian Education, federal, many have no websites)
+- **478 likely charter LEAs** (many lack independent websites)
+- **285 districts >1,000 enrollment** still missing (these definitely have websites)
+- **DuckDuckGo search was essentially broken** (4 results out of thousands of attempts)
+
+### Outreach Tier Distribution (from keyword scores)
+
+| Tier | Districts | Description |
+|------|-----------|-------------|
+| Tier 1 | 1,036 (6.4%) | Strong buying signals |
+| Tier 2 | 4,081 (25.0%) | Moderate signals |
+| Tier 3 | 11,182 (68.6%) | Limited signals |
 
 ---
 
-### Manual Document Crawling Pipeline (Advanced)
+### ⚡ RECOMMENDED: Recovery Pipeline (6-Strategy Waterfall)
 
-Run in this order (with parallel crawling):
+**Use `district-recovery.js` for recovery -- it supersedes all older scripts:**
 ```bash
-# 1. Initial crawl (PARALLEL - 5 districts at a time)
-node scripts/pilot-document-crawler.js --limit 200 --concurrency 5
+# Run all modes (failed-retry + discover-urls + empty-text)
+node scripts/district-recovery.js --mode all --concurrency 15
 
-# 2. Retry transient failures
-node scripts/retry-failed-crawls.js --ssl-bypass
+# Just retry failed districts
+node scripts/district-recovery.js --mode failed-retry --limit 100
 
-# 3. Fix bad URLs in database
-node scripts/verify-urls.js --failed-only --fix
+# Just discover URLs for districts with none
+node scripts/district-recovery.js --mode discover-urls --limit 500
 
-# 4. Reprocess PDFs if needed
-node scripts/reprocess-pdfs.js
+# Disable DuckDuckGo search (faster, but misses some)
+node scripts/district-recovery.js --mode all --no-search
 
-# 5. Compute keyword scores
+# Dry run (show counts only)
+node scripts/district-recovery.js --mode all --dry-run
+```
+
+**6 strategies tried per district (in order):**
+1. Fix obvious URL errors (typos, missing TLDs, mail. prefixes)
+2. Cross-reference all URL sources with www/http variants
+3. Email domain extraction from superintendent/admin email
+4. Pattern-based URL generation + DNS check
+5. DuckDuckGo web search (rate-limited)
+6. Error-specific retry (45s timeout, HTTP fallback, browser headers)
+
+**After recovery, recompute keyword scores:**
+```bash
 node scripts/compute-keyword-scores.js
+```
 
-# 6. Generate embeddings (BATCH - 100 chunks per API call)
-node scripts/generate-embeddings.js --batch-size 100
+### Embedding Generation Pipeline
+```bash
+# Generate embeddings for all documents (resumes from where it left off)
+node --max-old-space-size=4096 scripts/generate-embeddings-fast.js
 
-# 7. Analyze results
-node scripts/analyze-crawl-results.js
+# Process specific category first
+node --max-old-space-size=4096 scripts/generate-embeddings-fast.js --category strategic_plan
 
-# To continue where you left off:
+# Dry run (count chunks, no API calls)
+node scripts/generate-embeddings-fast.js --dry-run --limit 100
+```
+
+**Key details:**
+- Model: `text-embedding-3-small` (1536 dims, $0.02/1M tokens)
+- Chunks: 6000 chars max, 800 char overlap, paragraph-aware recursive splitting
+- Metadata prepended: "District: {name} | State: {ST} | Type: {category}"
+- Deduplication by content_hash (saves ~91% of "other" category)
+- Concurrent API calls: 3 parallel
+- Batch size: 150 chunks per API call (300K token limit)
+- Uses `LEFT JOIN ... WHERE e.id IS NULL` to skip already-embedded docs
+
+### Legacy Pipeline (for reference)
+```bash
 node scripts/pilot-document-crawler.js --limit 500 --concurrency 10 --skip-existing
+node scripts/analyze-failures.js
+node scripts/compute-keyword-scores.js
 ```
 
 ### Semantic Search
@@ -233,14 +255,17 @@ node scripts/search-documents.js "strategic plan" --state CA --verbose
 ```
 
 ### Phase 2 Database Tables
-| Table | Purpose |
-|-------|---------|
-| `district_documents` | Extracted document content |
-| `document_crawl_log` | Every crawl attempt |
-| `district_keyword_scores` | Taxonomy scores and tiers |
-| `document_embeddings` | Vector embeddings (pgvector) |
+| Table | Purpose | Records |
+|-------|---------|---------|
+| `district_documents` | Extracted document content | 175,589 |
+| `document_crawl_log` | Every crawl attempt | — |
+| `district_keyword_scores` | Taxonomy scores and tiers | 17,342 |
+| `document_embeddings` | Vector embeddings (text-embedding-3-small, 1536d) | 83,194 |
+| `url_corrections` | Discovered/fixed URLs | 387 |
 
 See `docs/CRAWL_WORKFLOW.md` for full documentation.
+
+---
 
 ## Learned Patterns (Update This Section)
 
@@ -249,12 +274,20 @@ See `docs/CRAWL_WORKFLOW.md` for full documentation.
 - State DoE data downloads are usually Excel/CSV
 - State superintendent associations often at [state]ssa.org
 - NCES as base is authoritative for district existence
-- **Crawling:** ~90% homepage success rate on first run
-- **Parallel crawling:** `--concurrency 10` optimal for M2 Pro+ machines (200 districts in ~10 min)
-- **Batch embeddings:** `--batch-size 100` sends 100 chunks per API call (100x faster)
-- **PDF extraction:** Use pdf-parse v1.1.1 (not v2.x - different API)
-- **Alternative URLs:** verify-urls.js finds redirects and www/non-www variants
-- **Automated pipeline:** Use `automated-crawl-pipeline.js` for hands-free operation
+- **Recovery:** 6-strategy waterfall in `district-recovery.js` -- 47.6% recovery on previously-failed districts (up from 20% with simple retry)
+- **Recovery:** Cross-referencing URL sources is the #1 strategy (319 districts recovered)
+- **Recovery:** Pattern-based URL generation (k12.state.us, schools.org, etc.) is #2 (531 districts)
+- **Recovery:** Email domain extraction catches districts where email != website domain (101 districts)
+- **Recovery:** `url_corrections` table + modified `national_registry` view ensures corrections flow to golden table
+- **Parallel crawling:** `--concurrency 15` optimal for M2 Pro+ machines
+- **PDF extraction:** Use pdf-parse v1.1.1 (not v2.x - different API). Suppress warnings with console.warn override.
+- **Embeddings:** `text-embedding-3-small` outperforms ada-002 at 5x lower cost ($0.02/1M vs $0.10/1M tokens)
+- **Embeddings:** Metadata prepending (district + state + category) dramatically improves retrieval for location-specific queries
+- **Embeddings:** Recursive paragraph-aware chunking (6000 chars, 800 overlap) produces better chunks than naive sentence splitting
+- **Embeddings:** Content-hash deduplication saves 91% of "other" docs (most are boilerplate/template content)
+- **Embeddings:** OpenAI 300K tokens/request limit means batch size must be ~150 chunks (not 2000) with 6000-char chunks
+- **Embeddings:** Full 83K embeddings generated in ~80 minutes total for $1.40 (not the feared 12 hours)
+- **Embeddings:** IVFFlat index creation needs `SET maintenance_work_mem = '256MB'` for 83K+ vectors
 
 ### What Doesn't Work
 - Exact string matching for district names (fails silently)
@@ -263,8 +296,25 @@ See `docs/CRAWL_WORKFLOW.md` for full documentation.
 - Modifying source tables to "fix" data
 - **Crawling:** Running crawler + embeddings in parallel (connection exhaustion) - **WILL CRASH**
 - **Crawling:** pdf-parse v2.x has incompatible API (silent extraction failures)
-- **Crawling:** Aggressive retry script (3 retries × 3 URL variants = 2-3 min per district)
-- **Crawling:** Retrying obviously wrong URLs (e.g., hse.k12.in.us when real URL is hseschools.org)
+- **Embeddings:** OFFSET/LIMIT pagination with `LEFT JOIN ... WHERE e.id IS NULL` -- result set shrinks as you embed, causing OFFSET to skip rows. Use OFFSET 0 + NOT IN exclusion instead.
+- **Embeddings:** ada-002 -- deprecated, inferior, 5x more expensive than text-embedding-3-small
+- **Embeddings:** 2000-chunk batch size with 6000-char chunks -- exceeds OpenAI's 300K tokens/request limit
+- **Crawling:** Simple retry (toggle www/http) -- only 20% recovery, need full 6-strategy waterfall
+- **Crawling:** DuckDuckGo HTML scraping -- gets rate-limited/blocked quickly (only 4 results out of thousands)
+- **Crawling:** verify-urls.js on DNS failures - recovery rate <5%
+- **Recovery:** ~80% of remaining 1,906 failures are "all 6 strategies failed" -- need proper search API (SerpAPI/Google) or headless browser
+
+### URL Patterns Found During Manual Research
+Many districts have URLs that don't match expected patterns:
+- `craigschools.org` → actual: `ccsd.k12.ak.us`
+- `kakaeschools.com` → actual: `kakeschools.com` (typo)
+- `pelicanschools.org` → actual: `pelicanschool.org` (singular)
+- `colbert.k12.al.us` → actual: `colbertk12.org`
+- `crenshawcounty.schoolinsites.com` → actual: `crenshaw-schools.org`
+- `hps.k12.ar.us` → actual: `harrisongoblins.org`
+- `cps.k12.ar.us` → actual: `cabotschools.org`
+- `conwayschools.info` → actual: `conwayschools.org`
+- `gobsd1.org` → actual: `batesvilleschools.com`
 
 ### Mistakes to Avoid
 - Don't re-fetch NCES data - it's already loaded
@@ -273,19 +323,55 @@ See `docs/CRAWL_WORKFLOW.md` for full documentation.
 - Don't skip the data_imports audit record
 - Don't assume CSVs are complete - always compare against NCES district count
 - Don't forget charter school LEAs - they're in NCES but often missing from state directories
-- **Crawling:** Don't skip SSL bypass for sites with invalid certs (use `--ssl-bypass`)
+- **Crawling:** Don't skip SSL bypass for sites with invalid certs
 - **Crawling:** Don't assume superintendent_directory URLs are correct (many are outdated)
-- **CRITICAL:** Don't report a crawl as "complete" until retry/recovery scripts have run
-- **CRITICAL:** Never run aggressive retry (>1 retry per variant) - wastes hours on dead URLs
-- **CRITICAL:** If retry recovery rate < 20% after 10 districts, abort and flag for manual research
+- **Crawling:** Don't use DuckDuckGo HTML scraping for batch URL discovery -- gets blocked fast
+- **CRITICAL:** Always use `district-recovery.js` for recovery, not the old retry scripts
+- **CRITICAL:** 314 districts in `districts` table have NULL `nces_id` -- always filter with `d.nces_id IS NOT NULL`
+- **CRITICAL:** Run `compute-keyword-scores.js` AFTER any recovery crawl to update tiers
 
 ### Session Continuity
 - If session crashes, check `logs/SESSION_LOG_*.md` for status
-- Previous agent crashed on Kentucky (fetch-ky.js) - test carefully
 - Many fetch scripts exist in `/scripts/fetch-*.js` - some untested
-- **Phase 2 status:** Check `district_documents` count and `document_crawl_log` for progress
+- **Phase 2 status:** Run `node scripts/district-recovery.js --mode all --dry-run` to check recoverable counts
+- **Quick DB check:** `node scripts/db-status.js` or run the SQL queries in this file
 
 ---
 
-*Last updated: February 5, 2026*
+## AASA Platform Deployment (Railway)
+
+The AASA Platform is deployed on Railway with two services:
+
+### Services
+| Service | URL | Purpose |
+|---------|-----|---------|
+| aasa-api | https://aasa-api-production.up.railway.app | Backend API |
+| web | https://web-production-75c17.up.railway.app | Frontend (React) |
+
+### Authentication
+- Uses **Bearer token auth** (Supabase JWT) - more reliable than cookies
+- Frontend sends `Authorization: Bearer <token>` header with each request
+- API validates tokens via `getSupabase().auth.getUser(token)`
+- Cookie sessions are kept as fallback but modern browsers block cross-origin cookies
+
+### Key Environment Variables (API)
+```
+RAILWAY_DOCKERFILE_PATH=aasa-platform/Dockerfile.api
+DATABASE_URL=<supabase postgres url>
+SUPABASE_URL=<supabase project url>
+SUPABASE_ANON_KEY=<supabase anon key>
+SUPABASE_SERVICE_ROLE_KEY=<supabase service role key>
+APP_URL=https://web-production-75c17.up.railway.app
+SESSION_SECRET=<random string>
+NODE_ENV=production
+```
+
+### Deployment Issues & Fixes
+- **Stale git context:** Railway caches aggressively. Delete and recreate service if cache clear doesn't work.
+- **Auth loops:** Caused by third-party cookie blocking. Fixed with Bearer token auth.
+- **Dockerfile issues:** Shared package exports TypeScript source, not dist. See `Dockerfile.api` line 35.
+
+---
+
+*Last updated: February 10, 2026*
 *Update this file after every correction or learned pattern*

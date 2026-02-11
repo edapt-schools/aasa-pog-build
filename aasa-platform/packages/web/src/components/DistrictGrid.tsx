@@ -1,6 +1,7 @@
 import { DistrictCard } from './DistrictCard'
 import { EmptyState } from './EmptyState'
 import { Card } from './ui/card'
+import { AlertCircle, SearchX } from 'lucide-react'
 import type { District } from '@aasa-platform/shared'
 
 interface DistrictGridProps {
@@ -74,7 +75,7 @@ export function DistrictGrid({
       <EmptyState
         title="Error Loading Districts"
         description={error}
-        icon="alert-circle"
+        icon={<AlertCircle className="w-10 h-10" />}
       />
     )
   }
@@ -85,7 +86,7 @@ export function DistrictGrid({
       <EmptyState
         title="No Districts Found"
         description="Try adjusting your filters to see more results."
-        icon="search"
+        icon={<SearchX className="w-10 h-10" />}
       />
     )
   }

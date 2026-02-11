@@ -49,6 +49,27 @@ router.get('/', async (req: Request, res: Response) => {
         req.query.hasSuperintendent !== undefined
           ? req.query.hasSuperintendent === 'true'
           : undefined,
+      frplMin: req.query.frplMin ? Number(req.query.frplMin) : undefined,
+      frplMax: req.query.frplMax ? Number(req.query.frplMax) : undefined,
+      minorityMin: req.query.minorityMin ? Number(req.query.minorityMin) : undefined,
+      minorityMax: req.query.minorityMax ? Number(req.query.minorityMax) : undefined,
+      localeType: req.query.localeType
+        ? Array.isArray(req.query.localeType)
+          ? (req.query.localeType as string[])
+          : [req.query.localeType as string]
+        : undefined,
+      readinessScoreMin: req.query.readinessScoreMin
+        ? Number(req.query.readinessScoreMin)
+        : undefined,
+      alignmentScoreMin: req.query.alignmentScoreMin
+        ? Number(req.query.alignmentScoreMin)
+        : undefined,
+      activationScoreMin: req.query.activationScoreMin
+        ? Number(req.query.activationScoreMin)
+        : undefined,
+      brandingScoreMin: req.query.brandingScoreMin
+        ? Number(req.query.brandingScoreMin)
+        : undefined,
       search: req.query.search as string | undefined,
     }
 
