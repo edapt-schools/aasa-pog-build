@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js'
 import type {
   CommandRequest,
   CommandResponse,
+  CommandSearchTelemetrySummary,
   DistrictWhyDetails,
   ListDistrictsParams,
   ListDistrictsResponse,
@@ -234,6 +235,10 @@ export class ApiClient {
     return apiFetch<DistrictWhyDetails>(
       `/search/why/${ncesId}?confidenceThreshold=${confidenceThreshold}`
     )
+  }
+
+  async getCommandTelemetry(days: number = 7): Promise<CommandSearchTelemetrySummary> {
+    return apiFetch<CommandSearchTelemetrySummary>(`/search/telemetry?days=${days}`)
   }
 
   // =========================================================================

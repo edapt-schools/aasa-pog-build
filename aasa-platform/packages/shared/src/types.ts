@@ -402,6 +402,21 @@ export interface CommandResponse {
   generatedAt: string
 }
 
+export interface CommandSearchTelemetrySummary {
+  periodDays: number
+  totalQueries: number
+  uniquePrompts: number
+  avgResultsPerQuery: number
+  repeatDistricts: Array<{
+    ncesId: string
+    appearances: number
+  }>
+  topPrompts: Array<{
+    prompt: string
+    count: number
+  }>
+}
+
 // =============================================================================
 // Cohort Types
 // =============================================================================

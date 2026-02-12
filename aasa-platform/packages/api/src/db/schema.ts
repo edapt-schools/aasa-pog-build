@@ -378,6 +378,27 @@ export const savedSearches = pgTable('saved_searches', {
   userIdIdx: index('idx_saved_searches_user').on(table.userId),
 }))
 
+/**
+ * Command Search Logs - telemetry for Command Center query quality analysis
+ */
+export const commandSearchLogs = pgTable('command_search_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id'),
+  prompt: text('prompt').notNull(),
+  intent: varchar('intent', { length: 50 }),
+  confidenceThreshold: decimal('confidence_threshold'),
+  leadFilters: jsonb('lead_filters'),
+  grantCriteria: jsonb('grant_criteria'),
+  suppressionDays: integer('suppression_days'),
+  resultCount: integer('result_count'),
+  topNcesIds: text('top_nces_ids').array(),
+  generatedAt: timestamp('generated_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('idx_command_search_logs_user').on(table.userId),
+  intentIdx: index('idx_command_search_logs_intent').on(table.intent),
+  generatedAtIdx: index('idx_command_search_logs_generated_at').on(table.generatedAt),
+}))
+
 // =============================================================================
 // Relations - Drizzle ORM relationships for type-safe joins
 // =============================================================================
@@ -461,3 +482,5 @@ export type SavedCohortItem = typeof savedCohortItems.$inferSelect
 export type SavedCohortItemInsert = typeof savedCohortItems.$inferInsert
 export type SavedSearch = typeof savedSearches.$inferSelect
 export type SavedSearchInsert = typeof savedSearches.$inferInsert
+export type CommandSearchLog = typeof commandSearchLogs.$inferSelect
+export type CommandSearchLogInsert = typeof commandSearchLogs.$inferInsert

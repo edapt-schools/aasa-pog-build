@@ -23,6 +23,7 @@ import {
   Trash2,
   AlertTriangle,
   Clock,
+  BarChart3,
 } from 'lucide-react'
 import { useSearchParams, useBlocker } from 'react-router-dom'
 import type {
@@ -30,6 +31,7 @@ import type {
   CommandRequest,
   EngagementEvent,
   GrantCriteria,
+  CommandSearchTelemetrySummary,
   SavedCohort,
   SavedSearchRecord,
 } from '@aasa-platform/shared'
@@ -956,6 +958,7 @@ export default function CommandCenter() {
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [prompt, setPrompt] = useState('')
+  const lastQueryRef = useRef('')
   const [hasSearched, setHasSearched] = useState(false)
   const [attachment, setAttachment] = useState<{ filename: string; mimeType: string; textContent: string } | undefined>()
   const [whyOverrides, setWhyOverrides] = useState<Record<string, { summary: string; excerpts: Array<{ keyword: string; excerpt: string; documentUrl?: string | null }> }>>({})
@@ -985,8 +988,9 @@ export default function CommandCenter() {
   const [showSaveSearchModal, setShowSaveSearchModal] = useState(false)
   const [searchNameInput, setSearchNameInput] = useState('')
   const [searchSaving, setSearchSaving] = useState(false)
-  const [showSavedSearches, setShowSavedSearches] = useState(false)
+  // showSavedSearches state removed -- saved searches are now inline on landing page
   const [searchIsSaved, setSearchIsSaved] = useState(false)
+  const [commandTelemetry, setCommandTelemetry] = useState<CommandSearchTelemetrySummary | null>(null)
 
   // Navigation guard state
   const [navGuardSaving, setNavGuardSaving] = useState(false)
@@ -1009,6 +1013,11 @@ export default function CommandCenter() {
   // Load user's saved searches from server
   useEffect(() => {
     apiClient.listSavedSearches().then((res) => setSavedSearches(res.searches)).catch(() => {})
+  }, [])
+
+  // Load 7-day command telemetry (query quality / repeat districts)
+  useEffect(() => {
+    apiClient.getCommandTelemetry(7).then(setCommandTelemetry).catch(() => {})
   }, [])
 
   // Navigation guard (React Router)
@@ -1035,7 +1044,7 @@ export default function CommandCenter() {
   const handleSaveAndLeave = async () => {
     setNavGuardSaving(true)
     try {
-      const lastQuery = latestResults.length > 0 ? prompt || 'Unnamed search' : ''
+      const lastQuery = lastQueryRef.current || 'Unnamed search'
       await apiClient.saveSearch({
         name: `Search: ${lastQuery.slice(0, 50)}`,
         query: lastQuery,
@@ -1131,7 +1140,7 @@ export default function CommandCenter() {
     try {
       await apiClient.saveSearch({
         name: searchNameInput.trim(),
-        query: prompt || latestExplanation,
+        query: lastQueryRef.current || prompt || latestExplanation,
         resultCount: latestResults.length,
       })
       setSearchIsSaved(true)
@@ -1150,7 +1159,6 @@ export default function CommandCenter() {
 
   const handleRunSavedSearch = (search: SavedSearchRecord) => {
     setPrompt(search.query)
-    setShowSavedSearches(false)
     setTimeout(() => runPrompt(search.query), 50)
   }
 
@@ -1178,6 +1186,7 @@ export default function CommandCenter() {
   const runPrompt = async (value?: string) => {
     const text = (value || prompt).trim()
     if (!text) return
+    lastQueryRef.current = text
     setHasSearched(true)
     setExpandedRow(null)
     setSearchIsSaved(false)
@@ -1194,7 +1203,7 @@ export default function CommandCenter() {
       grantCriteria: criteriaOverrides,
     }
 
-    setPrompt('')
+    // Keep the query visible in the search bar (don't clear it)
     setAttachment(undefined)
     await run(request)
   }
@@ -1370,6 +1379,96 @@ export default function CommandCenter() {
                     Clear
                   </button>
                 </p>
+              </div>
+            )}
+
+            {/* Saved searches section */}
+            {savedSearches.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold text-foreground">Your Saved Searches</h3>
+                  <span className="text-[10px] bg-accent/10 text-accent rounded-full px-1.5 py-0.5 font-medium">{savedSearches.length}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {savedSearches.map((s) => (
+                    <div
+                      key={s.id}
+                      className="group flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-accent/30 hover:bg-accent/5 transition-all duration-[var(--motion-fast)]"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleRunSavedSearch(s)}
+                        className="flex-1 text-left min-w-0"
+                      >
+                        <div className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">{s.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 truncate">{s.query}</div>
+                        <div className="text-[10px] text-muted-foreground/60 mt-1">
+                          {s.resultCount != null ? `${s.resultCount} results` : ''}
+                          {s.resultCount != null ? ' · ' : ''}
+                          {new Date(s.createdAt).toLocaleDateString()}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSavedSearch(s.id)}
+                        className="p-1.5 rounded-md hover:bg-muted text-muted-foreground/40 hover:text-destructive shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Delete saved search"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {commandTelemetry && commandTelemetry.totalQueries > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold text-foreground">Search Quality Pulse (7 days)</h3>
+                </div>
+                <div className="rounded-xl border border-border bg-card px-4 py-3 space-y-3">
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Queries</p>
+                      <p className="text-sm font-semibold text-foreground">{commandTelemetry.totalQueries}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Unique Prompts</p>
+                      <p className="text-sm font-semibold text-foreground">{commandTelemetry.uniquePrompts}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Avg Results</p>
+                      <p className="text-sm font-semibold text-foreground">{commandTelemetry.avgResultsPerQuery}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[11px] font-medium text-muted-foreground mb-1">Top repeated districts</p>
+                      <div className="space-y-1.5">
+                        {commandTelemetry.repeatDistricts.slice(0, 4).map((d) => (
+                          <div key={d.ncesId} className="flex items-center justify-between text-xs">
+                            <span className="text-foreground/80">NCES {d.ncesId}</span>
+                            <span className="text-muted-foreground">{d.appearances}x</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-muted-foreground mb-1">Top prompts</p>
+                      <div className="space-y-1.5">
+                        {commandTelemetry.topPrompts.slice(0, 4).map((p) => (
+                          <div key={p.prompt} className="flex items-center justify-between gap-2 text-xs">
+                            <span className="truncate text-foreground/80">{p.prompt}</span>
+                            <span className="text-muted-foreground shrink-0">{p.count}x</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1582,58 +1681,7 @@ export default function CommandCenter() {
         cohortSaving={cohortSaving}
       />
 
-      {/* Saved searches panel (accessible from landing page) */}
-      {!hasSearched && !loading && savedSearches.length > 0 && (
-        <div className="fixed bottom-4 right-4 z-20">
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSavedSearches(!showSavedSearches)}
-              className="shadow-lg"
-            >
-              <Clock className="w-3.5 h-3.5 mr-1.5" /> Saved Searches
-              <span className="ml-1 text-[10px] bg-accent/10 text-accent rounded-full px-1.5">{savedSearches.length}</span>
-            </Button>
-            {showSavedSearches && (
-              <div className="absolute bottom-full right-0 mb-2 w-80 rounded-lg border border-border bg-card shadow-xl overflow-hidden">
-                <div className="p-3 border-b border-border">
-                  <h4 className="text-xs font-semibold text-foreground">Saved Searches</h4>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {savedSearches.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/50 border-b border-border last:border-0"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleRunSavedSearch(s)}
-                        className="flex-1 text-left min-w-0"
-                      >
-                        <div className="text-xs font-medium text-foreground truncate">{s.name}</div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{s.query}</div>
-                        <div className="text-[10px] text-muted-foreground/60 mt-0.5">
-                          {s.resultCount != null ? `${s.resultCount} results` : ''}
-                          {' · '}
-                          {new Date(s.createdAt).toLocaleDateString()}
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSavedSearch(s.id)}
-                        className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-destructive shrink-0 ml-2"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Saved searches are now inline on the landing page (above) */}
 
       {/* Cohort name modal */}
       <Modal
@@ -1678,7 +1726,7 @@ export default function CommandCenter() {
             autoFocus
           />
           <p className="text-xs text-muted-foreground">
-            Saving "{prompt || 'search'}" with {latestResults.length} result{latestResults.length !== 1 ? 's' : ''}
+            Saving "{lastQueryRef.current || prompt || 'search'}" with {latestResults.length} result{latestResults.length !== 1 ? 's' : ''}
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setShowSaveSearchModal(false)}>Cancel</Button>
