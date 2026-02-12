@@ -827,97 +827,97 @@ function UnsavedChangesModal({
 }
 
 
-/** Floating lava-lamp orbs — AASA brand: dark blue #173054 + gold #fcd50e
- *  Orbs take turns — when blue is visible, gold fades out, and vice versa.
- *  They roam across the full screen so neither color is pinned to a corner. */
+/** Floating orbs — AASA brand navy #173054 + red #C41E3A
+ *  Three orbs drift slowly in separate zones so they never overlap.
+ *  Each orb smoothly transitions between navy and red on a staggered
+ *  8-second cadence so there's always a mix of both colors on screen. */
 function FloatingOrbs() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
-      <div className="absolute rounded-full orb-blue-1" />
-      <div className="absolute rounded-full orb-blue-2" />
-      <div className="absolute rounded-full orb-gold-1" />
-      <div className="absolute rounded-full orb-gold-2" />
+      <div className="absolute rounded-full aasa-orb aasa-orb-1" />
+      <div className="absolute rounded-full aasa-orb aasa-orb-2" />
+      <div className="absolute rounded-full aasa-orb aasa-orb-3" />
 
       <style>{`
-        /* ── Blue orbs ─────────────────────────── */
-        .orb-blue-1 {
-          width: 450px; height: 450px;
-          background: #173054;
-          filter: blur(80px);
-          top: 20%; left: 30%;
-          animation: roam-b1 30s ease-in-out infinite, phase-blue 16s ease-in-out infinite;
-        }
-        .orb-blue-2 {
-          width: 350px; height: 350px;
-          background: #173054;
-          filter: blur(65px);
-          top: 45%; left: 55%;
-          animation: roam-b2 26s ease-in-out infinite, phase-blue 16s ease-in-out infinite;
-          animation-delay: 2s, 2s;
+        .aasa-orb {
+          opacity: 0.15;
         }
 
-        /* ── Gold orbs ─────────────────────────── */
-        .orb-gold-1 {
+        /* ── Orb 1: top-left zone ───────────────── */
+        .aasa-orb-1 {
           width: 420px; height: 420px;
-          background: #fcd50e;
-          filter: blur(75px);
-          top: 35%; left: 20%;
-          animation: roam-g1 28s ease-in-out infinite, phase-gold 16s ease-in-out infinite;
-        }
-        .orb-gold-2 {
-          width: 330px; height: 330px;
-          background: #fcd50e;
-          filter: blur(60px);
-          top: 15%; left: 50%;
-          animation: roam-g2 24s ease-in-out infinite, phase-gold 16s ease-in-out infinite;
-          animation-delay: 2s, 2s;
+          filter: blur(80px);
+          top: 5%; left: 5%;
+          animation:
+            orb1-drift 32s ease-in-out infinite,
+            orb1-color 8s ease-in-out infinite;
         }
 
-        /* ── Alternating fade: blue and gold take turns ── */
-        /* Blue fades in while gold fades out, then swap */
-        @keyframes phase-blue {
-          0%   { opacity: 0; }
-          10%  { opacity: 0.16; }
-          40%  { opacity: 0.14; }
-          50%  { opacity: 0; }
-          100% { opacity: 0; }
-        }
-        @keyframes phase-gold {
-          0%   { opacity: 0; }
-          50%  { opacity: 0; }
-          60%  { opacity: 0.14; }
-          90%  { opacity: 0.12; }
-          100% { opacity: 0; }
+        /* ── Orb 2: center-right zone ───────────── */
+        .aasa-orb-2 {
+          width: 380px; height: 380px;
+          filter: blur(70px);
+          top: 35%; right: 5%; left: auto;
+          animation:
+            orb2-drift 28s ease-in-out infinite,
+            orb2-color 8s ease-in-out infinite;
+          animation-delay: 0s, -2.67s;
         }
 
-        /* ── Roaming paths (viewport-relative, full screen) ── */
-        @keyframes roam-b1 {
-          0%   { transform: translate(0, 0) scale(1); }
-          20%  { transform: translate(25vw, 15vh) scale(1.08); }
-          40%  { transform: translate(-10vw, 30vh) scale(0.94); }
-          60%  { transform: translate(15vw, -10vh) scale(1.04); }
-          80%  { transform: translate(-20vw, 10vh) scale(0.96); }
-          100% { transform: translate(0, 0) scale(1); }
+        /* ── Orb 3: bottom-left zone ────────────── */
+        .aasa-orb-3 {
+          width: 360px; height: 360px;
+          filter: blur(65px);
+          bottom: 5%; left: 25%; top: auto;
+          animation:
+            orb3-drift 35s ease-in-out infinite,
+            orb3-color 8s ease-in-out infinite;
+          animation-delay: 0s, -5.33s;
         }
-        @keyframes roam-b2 {
-          0%   { transform: translate(0, 0) scale(1); }
-          25%  { transform: translate(-25vw, -15vh) scale(1.06); }
-          50%  { transform: translate(-15vw, 20vh) scale(0.92); }
-          75%  { transform: translate(20vw, 5vh) scale(1.08); }
-          100% { transform: translate(0, 0) scale(1); }
+
+        /* ── Color transitions: navy ↔ red ──────── */
+        /* Each orb cycles through the same keyframes but with
+           staggered animation-delay (-2.67s apart = 8s / 3)
+           so at any moment the three orbs show different hues. */
+
+        @keyframes orb1-color {
+          0%, 100% { background: #173054; }
+          50%      { background: #C41E3A; }
         }
-        @keyframes roam-g1 {
-          0%   { transform: translate(0, 0) scale(1); }
-          20%  { transform: translate(30vw, -20vh) scale(0.92); }
-          45%  { transform: translate(20vw, 15vh) scale(1.1); }
-          70%  { transform: translate(-15vw, -5vh) scale(0.95); }
-          100% { transform: translate(0, 0) scale(1); }
+        @keyframes orb2-color {
+          0%, 100% { background: #173054; }
+          50%      { background: #C41E3A; }
         }
-        @keyframes roam-g2 {
-          0%   { transform: translate(0, 0) scale(1); }
-          30%  { transform: translate(-20vw, 25vh) scale(1.08); }
-          60%  { transform: translate(10vw, 10vh) scale(0.9); }
-          100% { transform: translate(0, 0) scale(1); }
+        @keyframes orb3-color {
+          0%, 100% { background: #173054; }
+          50%      { background: #C41E3A; }
+        }
+
+        /* ── Drift paths: each orb stays in its zone ── */
+        /* Orb 1 roams the top-left quadrant */
+        @keyframes orb1-drift {
+          0%   { transform: translate(0, 0); }
+          25%  { transform: translate(8vw, 6vh); }
+          50%  { transform: translate(3vw, 12vh); }
+          75%  { transform: translate(12vw, 3vh); }
+          100% { transform: translate(0, 0); }
+        }
+
+        /* Orb 2 roams the center-right area */
+        @keyframes orb2-drift {
+          0%   { transform: translate(0, 0); }
+          20%  { transform: translate(-6vw, 8vh); }
+          45%  { transform: translate(-10vw, -4vh); }
+          70%  { transform: translate(-3vw, 10vh); }
+          100% { transform: translate(0, 0); }
+        }
+
+        /* Orb 3 roams the bottom-center area */
+        @keyframes orb3-drift {
+          0%   { transform: translate(0, 0); }
+          30%  { transform: translate(10vw, -6vh); }
+          60%  { transform: translate(-5vw, -8vh); }
+          100% { transform: translate(0, 0); }
         }
       `}</style>
     </div>
