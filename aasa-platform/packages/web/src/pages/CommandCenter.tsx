@@ -927,6 +927,72 @@ function FloatingOrbs() {
 }
 
 
+/** Collapsible telemetry panel — hidden by default */
+function TelemetryPulse({ telemetry }: { telemetry: CommandSearchTelemetrySummary }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors group"
+      >
+        <BarChart3 className="w-3.5 h-3.5" />
+        <span>Search Quality Pulse (7 days)</span>
+        {open ? (
+          <ChevronUp className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+        ) : (
+          <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+        )}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-xl border border-border bg-card px-4 py-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <p className="text-xs text-muted-foreground">Queries</p>
+              <p className="text-sm font-semibold text-foreground">{telemetry.totalQueries}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Unique Prompts</p>
+              <p className="text-sm font-semibold text-foreground">{telemetry.uniquePrompts}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Avg Results</p>
+              <p className="text-sm font-semibold text-foreground">{telemetry.avgResultsPerQuery}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground mb-1">Top repeated districts</p>
+              <div className="space-y-1.5">
+                {telemetry.repeatDistricts.slice(0, 4).map((d) => (
+                  <div key={d.ncesId} className="flex items-center justify-between text-xs">
+                    <span className="text-foreground/80">NCES {d.ncesId}</span>
+                    <span className="text-muted-foreground">{d.appearances}x</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground mb-1">Top prompts</p>
+              <div className="space-y-1.5">
+                {telemetry.topPrompts.slice(0, 4).map((p) => (
+                  <div key={p.prompt} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate text-foreground/80">{p.prompt}</span>
+                    <span className="text-muted-foreground shrink-0">{p.count}x</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
 // ── Main Component ─────────────────────────────────────────
 
 const WELCOME_BACK_KEY = 'aasa_last_visit_ts'
@@ -1423,53 +1489,9 @@ export default function CommandCenter() {
               </div>
             )}
 
+            {/* Telemetry pulse — collapsed toggle */}
             {commandTelemetry && commandTelemetry.totalQueries > 0 && (
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-foreground">Search Quality Pulse (7 days)</h3>
-                </div>
-                <div className="rounded-xl border border-border bg-card px-4 py-3 space-y-3">
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Queries</p>
-                      <p className="text-sm font-semibold text-foreground">{commandTelemetry.totalQueries}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Unique Prompts</p>
-                      <p className="text-sm font-semibold text-foreground">{commandTelemetry.uniquePrompts}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Avg Results</p>
-                      <p className="text-sm font-semibold text-foreground">{commandTelemetry.avgResultsPerQuery}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-[11px] font-medium text-muted-foreground mb-1">Top repeated districts</p>
-                      <div className="space-y-1.5">
-                        {commandTelemetry.repeatDistricts.slice(0, 4).map((d) => (
-                          <div key={d.ncesId} className="flex items-center justify-between text-xs">
-                            <span className="text-foreground/80">NCES {d.ncesId}</span>
-                            <span className="text-muted-foreground">{d.appearances}x</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-muted-foreground mb-1">Top prompts</p>
-                      <div className="space-y-1.5">
-                        {commandTelemetry.topPrompts.slice(0, 4).map((p) => (
-                          <div key={p.prompt} className="flex items-center justify-between gap-2 text-xs">
-                            <span className="truncate text-foreground/80">{p.prompt}</span>
-                            <span className="text-muted-foreground shrink-0">{p.count}x</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <TelemetryPulse telemetry={commandTelemetry} />
             )}
           </div>
         </div>

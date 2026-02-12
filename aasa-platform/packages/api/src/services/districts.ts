@@ -176,7 +176,7 @@ export async function listDistricts(
         nr.superintendent_email,
         nr.phone
       FROM national_registry nr
-      WHERE nr.nces_id = ANY(${ncesIds}::text[])
+      WHERE nr.nces_id IN (${sql.join(ncesIds.map(id => sql`${id}`), sql`, `)})
     `)
     : []
 
