@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Mic,
   MicOff,
@@ -18,13 +18,20 @@ import {
   X,
   FileText,
   Zap,
+  Bookmark,
+  FolderOpen,
+  Trash2,
+  AlertTriangle,
+  Clock,
 } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useBlocker } from 'react-router-dom'
 import type {
   CommandDistrictResult,
   CommandRequest,
   EngagementEvent,
   GrantCriteria,
+  SavedCohort,
+  SavedSearchRecord,
 } from '@aasa-platform/shared'
 import { Button } from '../components/ui/button'
 import { useCommandSearch } from '../hooks/useCommandSearch'
@@ -333,6 +340,60 @@ function ConfidenceDot({ band }: { band: string }) {
   )
 }
 
+/** Tooltip descriptions for score signals */
+const SIGNAL_TOOLTIPS: Record<string, string> = {
+  semantic_max: 'Highest semantic similarity between your query and this district\'s documents (0-1 scale). Higher means the district\'s content closely matches your search.',
+  readiness_score: 'District readiness for change based on strategic plans, needs assessments, and improvement indicators (0-10 scale).',
+  alignment_score: 'Alignment between district priorities and your offering based on document analysis (0-10 scale).',
+  activation_score: 'Active engagement signals like RFPs, grant applications, and procurement activity (0-10 scale).',
+  branding_score: 'District investment in communications, branding, and public engagement (0-10 scale).',
+  total_score: 'Aggregate keyword relevance score across all four categories (0-40 scale).',
+}
+
+const SCORE_TOOLTIPS: Record<string, string> = {
+  Readiness: 'Measures how prepared this district is for change. Looks for strategic plans, needs assessments, portrait of a graduate, and improvement indicators.',
+  Alignment: 'Measures how well this district\'s priorities align with competency-based education. Looks for instructional frameworks, curriculum standards, and educator development.',
+  Activation: 'Measures active engagement signals. Looks for RFPs, grant applications, procurement activity, and performance assessment evidence.',
+  Branding: 'Measures investment in communications. Looks for strategic storytelling, community engagement, content marketing, and public relations.',
+}
+
+/** Tooltip wrapper */
+function Tooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  const [show, setShow] = useState(false)
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const ref = useRef<HTMLSpanElement>(null)
+
+  const handleEnter = () => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 6, left: Math.max(8, rect.left + rect.width / 2 - 140) })
+    }
+    setShow(true)
+  }
+
+  return (
+    <span
+      ref={ref}
+      className="relative cursor-help"
+      onMouseEnter={handleEnter}
+      onMouseLeave={() => setShow(false)}
+      onFocus={handleEnter}
+      onBlur={() => setShow(false)}
+      tabIndex={0}
+    >
+      {children}
+      {show && (
+        <span
+          className="fixed z-50 max-w-[280px] rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground leading-relaxed shadow-lg"
+          style={{ top: pos.top, left: pos.left }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
 /** Single result row with expandable "Why" panel */
 function ResultRow({
   result,
@@ -340,6 +401,8 @@ function ResultRow({
   isExpanded,
   onToggle,
   whyOverride,
+  whyLoading,
+  whyError,
   onLoadWhy,
   onMarkContacted,
   onAddToCohort,
@@ -351,6 +414,8 @@ function ResultRow({
   isExpanded: boolean
   onToggle: () => void
   whyOverride?: { summary: string; excerpts: Array<{ keyword: string; excerpt: string; documentUrl?: string | null }> }
+  whyLoading?: boolean
+  whyError?: string | null
   onLoadWhy: () => void
   onMarkContacted: () => void
   onAddToCohort: () => void
@@ -411,31 +476,48 @@ function ResultRow({
             </p>
           </div>
 
-          {/* Signal tags */}
+          {/* Signal tags with tooltips */}
           {result.why.topSignals.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {result.why.topSignals.map((signal) => (
-                <span
+                <Tooltip
                   key={`${signal.category}-${signal.signal}`}
-                  className="inline-flex items-center gap-1 rounded-md bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent"
+                  text={SIGNAL_TOOLTIPS[signal.signal] || `${signal.signal}: ${signal.reason || 'Score contribution signal'}`}
                 >
-                  {signal.signal}
-                  <span className="opacity-60">{signal.weight.toFixed(1)}</span>
-                </span>
+                  <span className="inline-flex items-center gap-1 rounded-md bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+                    {signal.signal.replace(/_/g, ' ')}
+                    <span className="opacity-60">{signal.weight.toFixed(1)}</span>
+                  </span>
+                </Tooltip>
               ))}
             </div>
           )}
 
-          {/* Evidence excerpts */}
+          {/* Evidence excerpts with source links */}
           {((why as any).sourceExcerpts?.length > 0 || (whyOverride?.excerpts?.length ?? 0) > 0) && (
             <div>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                 Evidence
               </h4>
               <div className="space-y-2">
-                {(whyOverride?.excerpts || (why as any).sourceExcerpts || []).slice(0, 3).map((ex: any, i: number) => (
+                {(whyOverride?.excerpts || (why as any).sourceExcerpts || []).slice(0, 5).map((ex: any, i: number) => (
                   <div key={`${d.ncesId}-ex-${i}`} className="rounded-lg bg-background border border-border p-3">
-                    <span className="text-xs font-medium text-accent">{ex.keyword}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium text-accent">{ex.keyword?.replace(/_/g, ' ')}</span>
+                      {ex.documentUrl ? (
+                        <a
+                          href={ex.documentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-accent shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="w-3 h-3" /> View source
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/50 shrink-0">No source link</span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-3">{ex.excerpt}</p>
                   </div>
                 ))}
@@ -443,18 +525,30 @@ function ResultRow({
             </div>
           )}
 
-          {/* Load full rationale link */}
+          {/* Load full rationale link with loading/error states */}
           {!whyOverride && (
-            <button
-              type="button"
-              className="text-xs text-accent hover:underline font-medium"
-              onClick={(e) => { e.stopPropagation(); onLoadWhy() }}
-            >
-              Load full rationale &rarr;
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="text-xs text-accent hover:underline font-medium disabled:opacity-50"
+                disabled={whyLoading}
+                onClick={(e) => { e.stopPropagation(); onLoadWhy() }}
+              >
+                {whyLoading ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Loading rationale...
+                  </span>
+                ) : (
+                  <>Load full rationale &rarr;</>
+                )}
+              </button>
+              {whyError && (
+                <span className="text-xs text-destructive">{whyError}</span>
+              )}
+            </div>
           )}
 
-          {/* Score breakdown */}
+          {/* Score breakdown with tooltips */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Readiness', value: result.score.readiness },
@@ -462,10 +556,12 @@ function ResultRow({
               { label: 'Activation', value: result.score.activation },
               { label: 'Branding', value: result.score.branding },
             ].map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-lg font-semibold text-foreground tabular-nums">{s.value?.toFixed(1) ?? '—'}</div>
-                <div className="text-[11px] text-muted-foreground">{s.label}</div>
-              </div>
+              <Tooltip key={s.label} text={SCORE_TOOLTIPS[s.label] || s.label}>
+                <div className="text-center block">
+                  <div className="text-lg font-semibold text-foreground tabular-nums">{s.value?.toFixed(1) ?? '—'}</div>
+                  <div className="text-[11px] text-muted-foreground">{s.label}</div>
+                </div>
+              </Tooltip>
             ))}
           </div>
 
@@ -482,13 +578,13 @@ function ResultRow({
                 <ExternalLink className="w-3.5 h-3.5" /> Website
               </a>
             )}
-            {result.actions.email && (
+            {(result.district.superintendentEmail || result.actions.email) && (
               <a
-                href={`mailto:${result.actions.email}`}
+                href={`mailto:${result.district.superintendentEmail || result.actions.email}`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted/50 transition-colors min-h-[36px]"
                 onClick={(e) => { e.stopPropagation(); onMarkContacted() }}
               >
-                <Mail className="w-3.5 h-3.5" /> {result.actions.email}
+                <Mail className="w-3.5 h-3.5" /> {result.district.superintendentEmail || result.actions.email}
               </a>
             )}
             {d.phone && (
@@ -534,17 +630,31 @@ function ResultRow({
   )
 }
 
-/** Cohort tray at bottom */
+/** Cohort tray at bottom - now with naming and server-side persistence */
 function CohortTray({
   cohort,
+  activeCohort,
+  cohortList,
   onExport,
   onClear,
+  onSaveCohort,
+  onSelectCohort,
+  onCreateCohort,
+  cohortSaving,
 }: {
   cohort: CommandDistrictResult[]
+  activeCohort: SavedCohort | null
+  cohortList: SavedCohort[]
   onExport: () => void
   onClear: () => void
+  onSaveCohort: () => void
+  onSelectCohort: (cohort: SavedCohort) => void
+  onCreateCohort: () => void
+  cohortSaving: boolean
 }) {
-  if (cohort.length === 0) return null
+  const [showCohortPicker, setShowCohortPicker] = useState(false)
+
+  if (cohort.length === 0 && cohortList.length === 0) return null
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-lg">
@@ -554,7 +664,9 @@ function CohortTray({
             <div className="w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">
               {cohort.length}
             </div>
-            <span className="text-sm font-medium text-foreground">in cohort</span>
+            <span className="text-sm font-medium text-foreground">
+              {activeCohort ? activeCohort.name : 'Unsaved cohort'}
+            </span>
           </div>
           <div className="hidden sm:flex items-center gap-1 overflow-hidden">
             {cohort.slice(0, 3).map((item) => (
@@ -571,11 +683,142 @@ function CohortTray({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Cohort picker */}
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowCohortPicker(!showCohortPicker)}
+              className="text-muted-foreground"
+            >
+              <FolderOpen className="w-3.5 h-3.5 mr-1.5" /> My Cohorts
+              {cohortList.length > 0 && (
+                <span className="ml-1 text-[10px] bg-muted rounded-full px-1.5">{cohortList.length}</span>
+              )}
+            </Button>
+            {showCohortPicker && (
+              <div className="absolute bottom-full right-0 mb-2 w-72 rounded-lg border border-border bg-card shadow-xl overflow-hidden">
+                <div className="p-2 border-b border-border">
+                  <button
+                    type="button"
+                    onClick={() => { onCreateCohort(); setShowCohortPicker(false) }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-accent hover:bg-accent/10 rounded-md"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Create new cohort
+                  </button>
+                </div>
+                {cohortList.length > 0 ? (
+                  <div className="max-h-48 overflow-y-auto p-1">
+                    {cohortList.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => { onSelectCohort(c); setShowCohortPicker(false) }}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-md hover:bg-muted/50 ${
+                          activeCohort?.id === c.id ? 'bg-accent/10 text-accent' : 'text-foreground'
+                        }`}
+                      >
+                        <span className="truncate">{c.name}</span>
+                        <span className="text-muted-foreground shrink-0 ml-2">{c.itemCount ?? 0}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 text-xs text-muted-foreground text-center">No saved cohorts yet</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Save cohort */}
+          {cohort.length > 0 && (
+            <Button variant="outline" size="sm" onClick={onSaveCohort} disabled={cohortSaving}>
+              {cohortSaving ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Bookmark className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              {activeCohort ? 'Update' : 'Save'}
+            </Button>
+          )}
+
           <Button variant="outline" size="sm" onClick={onExport}>
             <Download className="w-3.5 h-3.5 mr-1.5" /> Export CSV
           </Button>
           <Button variant="ghost" size="sm" onClick={onClear} className="text-muted-foreground">
             Clear
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Modal component */
+function Modal({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-xl border border-border bg-card shadow-2xl p-6 mx-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** Navigation Guard Modal */
+function UnsavedChangesModal({
+  open,
+  onSaveAndLeave,
+  onLeave,
+  onCancel,
+  saving,
+}: {
+  open: boolean
+  onSaveAndLeave: () => void
+  onLeave: () => void
+  onCancel: () => void
+  saving: boolean
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="relative z-10 w-full max-w-sm rounded-xl border border-border bg-card shadow-2xl p-6 mx-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Unsaved search results</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Your search results will be lost if you leave.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 justify-end">
+          <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" size="sm" onClick={onLeave}>Leave without saving</Button>
+          <Button variant="default" size="sm" onClick={onSaveAndLeave} disabled={saving}>
+            {saving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Bookmark className="w-3.5 h-3.5 mr-1.5" />}
+            Save & Leave
           </Button>
         </div>
       </div>
@@ -716,6 +959,8 @@ export default function CommandCenter() {
   const [hasSearched, setHasSearched] = useState(false)
   const [attachment, setAttachment] = useState<{ filename: string; mimeType: string; textContent: string } | undefined>()
   const [whyOverrides, setWhyOverrides] = useState<Record<string, { summary: string; excerpts: Array<{ keyword: string; excerpt: string; documentUrl?: string | null }> }>>({})
+  const [whyLoadingIds, setWhyLoadingIds] = useState<Set<string>>(new Set())
+  const [whyErrors, setWhyErrors] = useState<Record<string, string>>({})
   const [criteriaOverrides, setCriteriaOverrides] = useState<GrantCriteria>({})
   const [cohort, setCohort] = useState<CommandDistrictResult[]>(() => getStoredCohort())
   const [engagementEvents, setEngagementEvents] = useState<EngagementEvent[]>(() => getStoredEvents())
@@ -727,6 +972,26 @@ export default function CommandCenter() {
   const { data, loading, error, run } = useCommandSearch()
   const [lastResponseAt, setLastResponseAt] = useState<string | null>(null)
 
+  // Cohort management state
+  const [activeCohort, setActiveCohort] = useState<SavedCohort | null>(null)
+  const [cohortList, setCohortList] = useState<SavedCohort[]>([])
+  const [cohortSaving, setCohortSaving] = useState(false)
+  const [showCohortNameModal, setShowCohortNameModal] = useState(false)
+  const [cohortNameInput, setCohortNameInput] = useState('')
+  const [pendingCohortAction, setPendingCohortAction] = useState<'create' | 'save' | null>(null)
+
+  // Saved searches state
+  const [savedSearches, setSavedSearches] = useState<SavedSearchRecord[]>([])
+  const [showSaveSearchModal, setShowSaveSearchModal] = useState(false)
+  const [searchNameInput, setSearchNameInput] = useState('')
+  const [searchSaving, setSearchSaving] = useState(false)
+  const [showSavedSearches, setShowSavedSearches] = useState(false)
+  const [searchIsSaved, setSearchIsSaved] = useState(false)
+
+  // Navigation guard state
+  const [navGuardSaving, setNavGuardSaving] = useState(false)
+  const hasUnsavedResults = hasSearched && latestResults.length > 0 && !searchIsSaved
+
   // Welcome-back state: read once (pure), write timestamp in effect
   const [showWelcome] = useState(() => shouldShowWelcome())
   const firstName = useMemo(() => extractFirstName(user?.email), [user?.email])
@@ -735,6 +1000,159 @@ export default function CommandCenter() {
     // Stamp the visit timestamp (side-effect, safe from Strict Mode double-render)
     localStorage.setItem(WELCOME_BACK_KEY, String(Date.now()))
   }, [])
+
+  // Load user's cohorts from server
+  useEffect(() => {
+    apiClient.listCohorts().then((res) => setCohortList(res.cohorts)).catch(() => {})
+  }, [])
+
+  // Load user's saved searches from server
+  useEffect(() => {
+    apiClient.listSavedSearches().then((res) => setSavedSearches(res.searches)).catch(() => {})
+  }, [])
+
+  // Navigation guard (React Router)
+  const blocker = useBlocker(
+    useCallback(
+      ({ currentLocation, nextLocation }: { currentLocation: { pathname: string }; nextLocation: { pathname: string } }) =>
+        hasUnsavedResults && currentLocation.pathname !== nextLocation.pathname,
+      [hasUnsavedResults]
+    )
+  )
+
+  // Browser beforeunload guard
+  useEffect(() => {
+    if (!hasUnsavedResults) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [hasUnsavedResults])
+
+  // Handle save-and-leave from navigation guard
+  const handleSaveAndLeave = async () => {
+    setNavGuardSaving(true)
+    try {
+      const lastQuery = latestResults.length > 0 ? prompt || 'Unnamed search' : ''
+      await apiClient.saveSearch({
+        name: `Search: ${lastQuery.slice(0, 50)}`,
+        query: lastQuery,
+        resultCount: latestResults.length,
+      })
+      setSearchIsSaved(true)
+      // Refresh saved searches
+      apiClient.listSavedSearches().then((res) => setSavedSearches(res.searches)).catch(() => {})
+      // Let the blocker proceed after saving
+      setTimeout(() => blocker.proceed?.(), 100)
+    } catch {
+      // Still proceed even if save fails
+      blocker.proceed?.()
+    } finally {
+      setNavGuardSaving(false)
+    }
+  }
+
+  // Cohort save handler
+  const handleSaveCohort = async () => {
+    if (activeCohort) {
+      // Update existing: add any new districts
+      setCohortSaving(true)
+      try {
+        const ncesIds = cohort.map((c) => c.district.ncesId).filter(Boolean) as string[]
+        await apiClient.addDistrictsToCohort(activeCohort.id, ncesIds)
+        apiClient.listCohorts().then((res) => setCohortList(res.cohorts)).catch(() => {})
+      } catch {}
+      setCohortSaving(false)
+    } else {
+      // Show name modal for new cohort
+      setCohortNameInput('')
+      setPendingCohortAction('save')
+      setShowCohortNameModal(true)
+    }
+  }
+
+  const handleCreateCohort = () => {
+    setCohortNameInput('')
+    setPendingCohortAction('create')
+    setShowCohortNameModal(true)
+  }
+
+  const handleCohortNameSubmit = async () => {
+    if (!cohortNameInput.trim()) return
+    setCohortSaving(true)
+    try {
+      const newCohort = await apiClient.createCohort(cohortNameInput.trim())
+      if (pendingCohortAction === 'save' && cohort.length > 0) {
+        const ncesIds = cohort.map((c) => c.district.ncesId).filter(Boolean) as string[]
+        await apiClient.addDistrictsToCohort(newCohort.id, ncesIds)
+      }
+      setActiveCohort(newCohort)
+      apiClient.listCohorts().then((res) => setCohortList(res.cohorts)).catch(() => {})
+    } catch {}
+    setCohortSaving(false)
+    setShowCohortNameModal(false)
+  }
+
+  const handleSelectCohort = async (c: SavedCohort) => {
+    try {
+      const detail = await apiClient.getCohortDetail(c.id)
+      setActiveCohort(c)
+      // Load cohort items as CommandDistrictResult stubs for the local cohort state
+      const items: CommandDistrictResult[] = (detail.cohort.items || [])
+        .filter((item) => item.district)
+        .map((item) => ({
+          district: item.district!,
+          score: { total: 0, readiness: 0, alignment: 0, activation: 0, branding: 0, composite: 0 },
+          why: {
+            ncesId: item.ncesId,
+            confidence: 0,
+            confidenceBand: 'low' as const,
+            summary: '',
+            topSignals: [],
+            sourceExcerpts: [],
+          },
+          actions: {
+            email: item.district?.superintendentEmail || null,
+            openDistrictSite: item.district?.websiteDomain ? `https://${item.district.websiteDomain}` : null,
+            ncesId: item.ncesId,
+          },
+        }))
+      setCohort(items)
+      storeCohort(items)
+    } catch {}
+  }
+
+  // Save search handler
+  const handleSaveSearch = async () => {
+    if (!searchNameInput.trim()) return
+    setSearchSaving(true)
+    try {
+      await apiClient.saveSearch({
+        name: searchNameInput.trim(),
+        query: prompt || latestExplanation,
+        resultCount: latestResults.length,
+      })
+      setSearchIsSaved(true)
+      apiClient.listSavedSearches().then((res) => setSavedSearches(res.searches)).catch(() => {})
+    } catch {}
+    setSearchSaving(false)
+    setShowSaveSearchModal(false)
+  }
+
+  const handleDeleteSavedSearch = async (id: string) => {
+    try {
+      await apiClient.deleteSavedSearch(id)
+      setSavedSearches((prev) => prev.filter((s) => s.id !== id))
+    } catch {}
+  }
+
+  const handleRunSavedSearch = (search: SavedSearchRecord) => {
+    setPrompt(search.query)
+    setShowSavedSearches(false)
+    setTimeout(() => runPrompt(search.query), 50)
+  }
 
   const starterPrompts = useMemo(
     () => [
@@ -762,6 +1180,7 @@ export default function CommandCenter() {
     if (!text) return
     setHasSearched(true)
     setExpandedRow(null)
+    setSearchIsSaved(false)
 
     const request: CommandRequest = {
       prompt: text,
@@ -793,6 +1212,8 @@ export default function CommandCenter() {
 
   const loadWhyDetails = async (ncesId: string | null) => {
     if (!ncesId) return
+    setWhyLoadingIds((prev) => new Set(prev).add(ncesId))
+    setWhyErrors((prev) => { const next = { ...prev }; delete next[ncesId]; return next })
     try {
       const details = await apiClient.getDistrictWhyDetails(ncesId, 0.6)
       setWhyOverrides((prev) => ({
@@ -802,8 +1223,13 @@ export default function CommandCenter() {
           excerpts: details.sourceExcerpts,
         },
       }))
-    } catch {
-      // Silent fallback
+    } catch (err: any) {
+      setWhyErrors((prev) => ({
+        ...prev,
+        [ncesId]: err?.message || 'Failed to load rationale',
+      }))
+    } finally {
+      setWhyLoadingIds((prev) => { const next = new Set(prev); next.delete(ncesId); return next })
     }
   }
 
@@ -827,14 +1253,17 @@ export default function CommandCenter() {
     downloadCsv(
       'grant-cohort.csv',
       cohort.map((item) => ({
-        ncesId: item.district.ncesId,
-        district: item.district.name,
-        state: item.district.state,
-        city: item.district.city,
-        enrollment: item.district.enrollment,
-        superintendentEmail: item.actions.email,
-        confidence: item.why.confidence.toFixed(2),
-        compositeScore: item.score.composite.toFixed(2),
+        'NCES ID': item.district.ncesId,
+        'District': item.district.name,
+        'State': item.district.state,
+        'City': item.district.city,
+        'Enrollment': item.district.enrollment,
+        'Superintendent': item.district.superintendentName,
+        'Email': item.district.superintendentEmail || item.actions.email,
+        'Phone': item.district.phone,
+        'Website': item.actions.openDistrictSite,
+        'Composite Score (0-10)': item.score.composite.toFixed(2),
+        'Confidence (0-1)': item.why.confidence.toFixed(2),
       }))
     )
   }
@@ -1029,11 +1458,27 @@ export default function CommandCenter() {
                 </div>
               )}
 
-              {/* Results count */}
+              {/* Results count + actions */}
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {latestResults.length} district{latestResults.length !== 1 ? 's' : ''} found
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    {latestResults.length} district{latestResults.length !== 1 ? 's' : ''} found
+                  </p>
+                  {searchIsSaved ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                      <Check className="w-3 h-3" /> Saved
+                    </span>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setSearchNameInput(''); setShowSaveSearchModal(true) }}
+                      className="text-accent"
+                    >
+                      <Bookmark className="w-3.5 h-3.5 mr-1" /> Save search
+                    </Button>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -1058,16 +1503,23 @@ export default function CommandCenter() {
                     onClick={() =>
                       downloadCsv(
                         'search-results.csv',
-                        latestResults.map((r) => ({
-                          rank: latestResults.indexOf(r) + 1,
-                          ncesId: r.district.ncesId,
-                          district: r.district.name,
-                          state: r.district.state,
-                          city: r.district.city,
-                          enrollment: r.district.enrollment,
-                          email: r.actions.email,
-                          composite: r.score.composite.toFixed(2),
-                          confidence: r.why.confidence.toFixed(2),
+                        latestResults.map((r, idx) => ({
+                          'Rank': idx + 1,
+                          'NCES ID': r.district.ncesId,
+                          'District': r.district.name,
+                          'State': r.district.state,
+                          'City': r.district.city,
+                          'Enrollment': r.district.enrollment,
+                          'Superintendent': r.district.superintendentName,
+                          'Email': r.district.superintendentEmail || r.actions.email,
+                          'Phone': r.district.phone,
+                          'Website': r.actions.openDistrictSite,
+                          'Composite Score (0-10)': r.score.composite.toFixed(2),
+                          'Readiness (0-10)': r.score.readiness.toFixed(2),
+                          'Alignment (0-10)': r.score.alignment.toFixed(2),
+                          'Activation (0-10)': r.score.activation.toFixed(2),
+                          'Branding (0-10)': r.score.branding.toFixed(2),
+                          'Confidence (0-1)': r.why.confidence.toFixed(2),
                         }))
                       )
                     }
@@ -1093,6 +1545,8 @@ export default function CommandCenter() {
                       )
                     }
                     whyOverride={result.district.ncesId ? whyOverrides[result.district.ncesId] : undefined}
+                    whyLoading={result.district.ncesId ? whyLoadingIds.has(result.district.ncesId) : false}
+                    whyError={result.district.ncesId ? whyErrors[result.district.ncesId] || null : null}
                     onLoadWhy={() => loadWhyDetails(result.district.ncesId)}
                     onMarkContacted={() => markContacted(result)}
                     onAddToCohort={() => addToCohort(result)}
@@ -1114,11 +1568,135 @@ export default function CommandCenter() {
       {/* Cohort tray */}
       <CohortTray
         cohort={cohort}
+        activeCohort={activeCohort}
+        cohortList={cohortList}
         onExport={exportCohort}
         onClear={() => {
           setCohort([])
           storeCohort([])
+          setActiveCohort(null)
         }}
+        onSaveCohort={handleSaveCohort}
+        onSelectCohort={handleSelectCohort}
+        onCreateCohort={handleCreateCohort}
+        cohortSaving={cohortSaving}
+      />
+
+      {/* Saved searches panel (accessible from landing page) */}
+      {!hasSearched && !loading && savedSearches.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-20">
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSavedSearches(!showSavedSearches)}
+              className="shadow-lg"
+            >
+              <Clock className="w-3.5 h-3.5 mr-1.5" /> Saved Searches
+              <span className="ml-1 text-[10px] bg-accent/10 text-accent rounded-full px-1.5">{savedSearches.length}</span>
+            </Button>
+            {showSavedSearches && (
+              <div className="absolute bottom-full right-0 mb-2 w-80 rounded-lg border border-border bg-card shadow-xl overflow-hidden">
+                <div className="p-3 border-b border-border">
+                  <h4 className="text-xs font-semibold text-foreground">Saved Searches</h4>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {savedSearches.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/50 border-b border-border last:border-0"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleRunSavedSearch(s)}
+                        className="flex-1 text-left min-w-0"
+                      >
+                        <div className="text-xs font-medium text-foreground truncate">{s.name}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{s.query}</div>
+                        <div className="text-[10px] text-muted-foreground/60 mt-0.5">
+                          {s.resultCount != null ? `${s.resultCount} results` : ''}
+                          {' · '}
+                          {new Date(s.createdAt).toLocaleDateString()}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSavedSearch(s.id)}
+                        className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-destructive shrink-0 ml-2"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cohort name modal */}
+      <Modal
+        open={showCohortNameModal}
+        onClose={() => setShowCohortNameModal(false)}
+        title={pendingCohortAction === 'create' ? 'Create New Cohort' : 'Save Cohort'}
+      >
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="e.g., Q1 Texas Outreach, Grant-Ready Districts..."
+            value={cohortNameInput}
+            onChange={(e) => setCohortNameInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCohortNameSubmit()}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowCohortNameModal(false)}>Cancel</Button>
+            <Button variant="default" size="sm" onClick={handleCohortNameSubmit} disabled={cohortSaving || !cohortNameInput.trim()}>
+              {cohortSaving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : null}
+              {pendingCohortAction === 'create' ? 'Create' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Save search modal */}
+      <Modal
+        open={showSaveSearchModal}
+        onClose={() => setShowSaveSearchModal(false)}
+        title="Save Search"
+      >
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="e.g., TX Tier 1 Districts, Grant FRPL 70%..."
+            value={searchNameInput}
+            onChange={(e) => setSearchNameInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSaveSearch()}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+            autoFocus
+          />
+          <p className="text-xs text-muted-foreground">
+            Saving "{prompt || 'search'}" with {latestResults.length} result{latestResults.length !== 1 ? 's' : ''}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowSaveSearchModal(false)}>Cancel</Button>
+            <Button variant="default" size="sm" onClick={handleSaveSearch} disabled={searchSaving || !searchNameInput.trim()}>
+              {searchSaving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Bookmark className="w-3.5 h-3.5 mr-1.5" />}
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Navigation guard modal */}
+      <UnsavedChangesModal
+        open={blocker.state === 'blocked'}
+        onSaveAndLeave={handleSaveAndLeave}
+        onLeave={() => blocker.proceed?.()}
+        onCancel={() => blocker.reset?.()}
+        saving={navGuardSaving}
       />
     </div>
   )

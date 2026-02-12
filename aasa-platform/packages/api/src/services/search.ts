@@ -364,6 +364,71 @@ function toConfidenceBand(confidence: number): ConfidenceBand {
   return 'low'
 }
 
+/**
+ * Generate a dynamic, per-district "Why this district" summary.
+ * Uses score categories, keyword matches, and semantic signals.
+ */
+function generateWhySummary(
+  districtName: string,
+  scores: { readiness: number; alignment: number; activation: number; branding: number },
+  semanticMax: number,
+  sourceExcerpts: Array<{ keyword: string }>,
+): string {
+  const ranked = [
+    { label: 'readiness', value: scores.readiness },
+    { label: 'alignment', value: scores.alignment },
+    { label: 'activation', value: scores.activation },
+    { label: 'branding', value: scores.branding },
+  ].sort((a, b) => b.value - a.value)
+
+  const strongCategories = ranked.filter((c) => c.value >= 3.0)
+  const topKeywords = [...new Set(sourceExcerpts.map((e) => e.keyword).filter(Boolean))].slice(0, 3)
+
+  const parts: string[] = []
+
+  // Lead with the strongest category
+  if (strongCategories.length > 0) {
+    const topLabel = strongCategories[0].label
+    const topValue = strongCategories[0].value.toFixed(1)
+    const labelMap: Record<string, string> = {
+      readiness: 'readiness for change',
+      alignment: 'instructional alignment',
+      activation: 'active engagement',
+      branding: 'communications and branding',
+    }
+    parts.push(`${districtName} shows strong ${labelMap[topLabel] || topLabel} signals (${topValue})`)
+  } else {
+    parts.push(`${districtName} has moderate signals across scoring categories`)
+  }
+
+  // Add semantic context if meaningful
+  if (semanticMax >= 0.7) {
+    parts.push('with high semantic relevance to your query')
+  } else if (semanticMax >= 0.5) {
+    parts.push('with moderate semantic relevance to your query')
+  }
+
+  // Add keyword evidence
+  if (topKeywords.length > 0) {
+    const kwStr = topKeywords.map((k) => k.replace(/_/g, ' ')).join(', ')
+    parts.push(`Evidence includes ${kwStr}`)
+  }
+
+  // Add secondary category if relevant
+  if (strongCategories.length >= 2) {
+    const secondary = strongCategories[1]
+    const labelMap: Record<string, string> = {
+      readiness: 'readiness',
+      alignment: 'alignment',
+      activation: 'activation',
+      branding: 'branding',
+    }
+    parts.push(`also scoring well in ${labelMap[secondary.label] || secondary.label} (${secondary.value.toFixed(1)})`)
+  }
+
+  return parts.join(', ') + '.'
+}
+
 function extractGrantCriteria(prompt: string, attachmentText?: string): GrantCriteria {
   const source = `${prompt}\n${attachmentText || ''}`.toLowerCase()
   const frpl = source.match(/(?:frpl|free(?:\\s|-)reduced(?:\\s|-)lunch)[^\\d]{0,20}(\\d{1,3})\\s*%?/)
@@ -477,6 +542,7 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       d.website_domain,
       d.superintendent_name,
       d.superintendent_email,
+      d.phone,
       d.frpl_percent,
       d.minority_percent,
       s.readiness_score,
@@ -567,7 +633,7 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
           websiteDomain: row.website_domain,
           superintendentName: row.superintendent_name,
           superintendentEmail: row.superintendent_email,
-          phone: null,
+          phone: row.phone || null,
           address: null,
           lastScrapedAt: null,
           scrapeStatus: null,
@@ -587,7 +653,12 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
           ncesId: row.nces_id,
           confidence,
           confidenceBand,
-          summary: `Top match due to scoring and evidence signals in district documents.`,
+          summary: generateWhySummary(
+            row.name,
+            { readiness, alignment, activation, branding },
+            semanticMax,
+            sourceExcerpts,
+          ),
           topSignals: [
             { signal: 'semantic_max', category: 'semantic', weight: semanticMax, reason: `Top semantic similarity across ${semanticHits} matching chunks` },
             { signal: 'readiness_score', category: 'readiness', weight: readiness },
@@ -736,7 +807,8 @@ export async function getDistrictWhyDetails(
   const activation = toNumber(row.activation_score)
   const branding = toNumber(row.branding_score)
   const total = toNumber(row.total_score)
-  const confidence = Math.min(0.95, Math.max(0.2, total / 10))
+  const hasScores = total > 0 || readiness > 0 || alignment > 0 || activation > 0 || branding > 0
+  const confidence = hasScores ? Math.min(0.95, Math.max(0.2, total / 10)) : 0.2
   const confidenceBand = toConfidenceBand(confidence)
 
   const sourceExcerpts: Array<{ documentUrl?: string | null; keyword: string; excerpt: string }> = []
@@ -751,14 +823,20 @@ export async function getDistrictWhyDetails(
     }
   }
 
+  const summary = hasScores
+    ? generateWhySummary(
+        row.name,
+        { readiness, alignment, activation, branding },
+        0, // No semantic context in on-demand endpoint
+        sourceExcerpts,
+      )
+    : `${row.name} has limited scoring data available. Keyword analysis may not have been completed for this district.`
+
   return {
     ncesId: row.nces_id,
     confidence,
     confidenceBand,
-    summary:
-      confidence >= confidenceThreshold
-        ? `${row.name} has strong alignment to current query signals.`
-        : `${row.name} has partial alignment and should be manually reviewed.`,
+    summary,
     topSignals: [
       { signal: 'readiness_score', category: 'readiness', weight: readiness },
       { signal: 'alignment_score', category: 'alignment', weight: alignment },
