@@ -19,6 +19,8 @@ import authRoutes from './routes/auth.js'
 import districtRoutes from './routes/districts.js'
 import searchRoutes from './routes/search.js'
 import insightsRoutes from './routes/insights.js'
+import cohortRoutes from './routes/cohorts.js'
+import savedSearchRoutes from './routes/searches.js'
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -72,6 +74,12 @@ app.use('/api/search', searchRoutes)
 
 // Insights routes
 app.use('/api/insights', insightsRoutes)
+
+// Cohort routes
+app.use('/api/cohorts', cohortRoutes)
+
+// Saved search routes
+app.use('/api/searches', savedSearchRoutes)
 
 // 404 handler
 app.use((_req, res) => {
