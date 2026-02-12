@@ -74,7 +74,7 @@ export async function semanticSearch(
 
   // Add document type filter if specified
   if (params.documentTypes && params.documentTypes.length > 0) {
-    query = sql`${query} AND d.document_type = ANY(${params.documentTypes}::text[])`
+    query = sql`${query} AND d.document_type IN (${sql.join(params.documentTypes.map(t => sql`${t}`), sql`, `)})`
   }
 
   // Add date range filters if specified
