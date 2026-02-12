@@ -21,6 +21,11 @@ import type {
   StateDetailResponse,
   TrendingResponse,
   APIError,
+  SavedCohort,
+  ListCohortsResponse,
+  CohortDetailResponse,
+  SavedSearchRecord,
+  ListSavedSearchesResponse,
 } from '@aasa-platform/shared'
 
 // Initialize Supabase client for getting auth token
@@ -261,6 +266,72 @@ export class ApiClient {
    */
   async getTrendingKeywords(period: '7d' | '30d' | '90d' = '30d'): Promise<TrendingResponse> {
     return apiFetch<TrendingResponse>(`/insights/trending?period=${period}`)
+  }
+
+  // =========================================================================
+  // Cohort API Methods
+  // =========================================================================
+
+  async listCohorts(): Promise<ListCohortsResponse> {
+    return apiFetch<ListCohortsResponse>('/cohorts')
+  }
+
+  async createCohort(name: string, description?: string): Promise<SavedCohort> {
+    return apiFetch<SavedCohort>('/cohorts', {
+      method: 'POST',
+      body: JSON.stringify({ name, description }),
+    })
+  }
+
+  async getCohortDetail(cohortId: string): Promise<CohortDetailResponse> {
+    return apiFetch<CohortDetailResponse>(`/cohorts/${cohortId}`)
+  }
+
+  async updateCohort(cohortId: string, updates: { name?: string; description?: string }): Promise<SavedCohort> {
+    return apiFetch<SavedCohort>(`/cohorts/${cohortId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    })
+  }
+
+  async deleteCohort(cohortId: string): Promise<void> {
+    await apiFetch<{ success: boolean }>(`/cohorts/${cohortId}`, { method: 'DELETE' })
+  }
+
+  async addDistrictsToCohort(cohortId: string, ncesIds: string[]): Promise<{ added: number }> {
+    return apiFetch<{ added: number }>(`/cohorts/${cohortId}/districts`, {
+      method: 'POST',
+      body: JSON.stringify({ ncesIds }),
+    })
+  }
+
+  async removeDistrictFromCohort(cohortId: string, ncesId: string): Promise<void> {
+    await apiFetch<{ success: boolean }>(`/cohorts/${cohortId}/districts/${ncesId}`, { method: 'DELETE' })
+  }
+
+  // =========================================================================
+  // Saved Search API Methods
+  // =========================================================================
+
+  async listSavedSearches(): Promise<ListSavedSearchesResponse> {
+    return apiFetch<ListSavedSearchesResponse>('/searches')
+  }
+
+  async saveSearch(data: {
+    name: string
+    query: string
+    intent?: string
+    filters?: Record<string, unknown>
+    resultCount?: number
+  }): Promise<SavedSearchRecord> {
+    return apiFetch<SavedSearchRecord>('/searches', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteSavedSearch(searchId: string): Promise<void> {
+    await apiFetch<{ success: boolean }>(`/searches/${searchId}`, { method: 'DELETE' })
   }
 }
 

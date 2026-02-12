@@ -254,10 +254,10 @@ router.get('/why/:ncesId', async (req: Request, res: Response) => {
     const confidenceThreshold =
       thresholdRaw !== undefined ? Math.min(0.95, Math.max(0.2, Number(thresholdRaw))) : 0.6
 
-    if (!ncesId || !/^\\d{7}$/.test(ncesId)) {
+    if (!ncesId || !/^\d{5,7}$/.test(ncesId)) {
       return res.status(400).json({
         error: 'Bad Request',
-        message: 'Valid NCES ID is required (7 digits)',
+        message: 'Valid NCES ID is required (5-7 digits)',
       })
     }
 

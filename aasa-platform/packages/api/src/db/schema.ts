@@ -331,6 +331,54 @@ export const documentEmbeddings = pgTable('document_embeddings', {
 }))
 
 // =============================================================================
+// USER LAYER - Cohorts, saved searches, and user state
+// =============================================================================
+
+/**
+ * Saved Cohorts - Named collections of districts curated by users
+ */
+export const savedCohorts = pgTable('saved_cohorts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull(), // Supabase auth user ID or email
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('idx_saved_cohorts_user').on(table.userId),
+}))
+
+/**
+ * Saved Cohort Items - Individual districts within a cohort
+ */
+export const savedCohortItems = pgTable('saved_cohort_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  cohortId: uuid('cohort_id').notNull(), // FK to saved_cohorts
+  ncesId: varchar('nces_id', { length: 20 }).notNull(),
+  notes: text('notes'),
+  addedAt: timestamp('added_at').defaultNow().notNull(),
+}, (table) => ({
+  cohortIdIdx: index('idx_cohort_items_cohort').on(table.cohortId),
+  cohortNcesUnique: uniqueIndex('idx_cohort_items_unique').on(table.cohortId, table.ncesId),
+}))
+
+/**
+ * Saved Searches - Persisted search queries for re-running
+ */
+export const savedSearches = pgTable('saved_searches', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  query: text('query').notNull(), // The prompt text
+  intent: varchar('intent', { length: 50 }),
+  filters: jsonb('filters'), // Grant criteria, lead filters, etc.
+  resultCount: integer('result_count'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('idx_saved_searches_user').on(table.userId),
+}))
+
+// =============================================================================
 // Relations - Drizzle ORM relationships for type-safe joins
 // =============================================================================
 
@@ -377,6 +425,17 @@ export const documentEmbeddingsRelations = relations(documentEmbeddings, ({ one 
   }),
 }))
 
+export const savedCohortsRelations = relations(savedCohorts, ({ many }) => ({
+  items: many(savedCohortItems),
+}))
+
+export const savedCohortItemsRelations = relations(savedCohortItems, ({ one }) => ({
+  cohort: one(savedCohorts, {
+    fields: [savedCohortItems.cohortId],
+    references: [savedCohorts.id],
+  }),
+}))
+
 // =============================================================================
 // Type exports - Use with InferSelectModel for type-safe queries
 // =============================================================================
@@ -395,3 +454,10 @@ export type KeywordScoreInsert = typeof districtKeywordScores.$inferInsert
 
 export type DistrictMatch = typeof districtMatches.$inferSelect
 export type StateRegistryDistrict = typeof stateRegistryDistricts.$inferSelect
+
+export type SavedCohort = typeof savedCohorts.$inferSelect
+export type SavedCohortInsert = typeof savedCohorts.$inferInsert
+export type SavedCohortItem = typeof savedCohortItems.$inferSelect
+export type SavedCohortItemInsert = typeof savedCohortItems.$inferInsert
+export type SavedSearch = typeof savedSearches.$inferSelect
+export type SavedSearchInsert = typeof savedSearches.$inferInsert
