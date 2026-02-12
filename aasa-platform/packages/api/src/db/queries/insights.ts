@@ -30,12 +30,15 @@ const STATE_NAMES: Record<string, string> = {
 export async function getInsightsOverview(): Promise<InsightsOverviewResponse> {
   const db = getDb()
 
-  // Get district and superintendent counts
+  // Get district and superintendent counts from the golden merged table
   const districtStats = await db.execute(sql`
     SELECT
       COUNT(*) as total_districts,
-      COUNT(superintendent_name) as with_superintendent
-    FROM districts
+      COUNT(superintendent_name) as with_superintendent,
+      COUNT(superintendent_email) as with_email,
+      COUNT(website) as with_website
+    FROM national_registry
+    WHERE nces_id IS NOT NULL
   `)
 
   // Get document count
@@ -97,21 +100,23 @@ export async function getInsightsOverview(): Promise<InsightsOverviewResponse> {
 export async function getAllStateStats(): Promise<StatesResponse> {
   const db = getDb()
 
+  // Use the golden merged table (national_registry) for accurate superintendent coverage
   const results = await db.execute(sql`
     SELECT
-      d.state as state_code,
-      COUNT(DISTINCT d.nces_id) as total_districts,
-      COUNT(DISTINCT CASE WHEN d.superintendent_name IS NOT NULL THEN d.nces_id END) as superintendent_count,
+      nr.state as state_code,
+      COUNT(DISTINCT nr.nces_id) as total_districts,
+      COUNT(DISTINCT CASE WHEN nr.superintendent_name IS NOT NULL THEN nr.nces_id END) as superintendent_count,
       COALESCE(AVG(ks.total_score::decimal), 0) as avg_total_score,
       COUNT(CASE WHEN ks.outreach_tier = 'tier1' THEN 1 END) as tier1_count,
       COUNT(CASE WHEN ks.outreach_tier = 'tier2' THEN 1 END) as tier2_count,
       COUNT(CASE WHEN ks.outreach_tier = 'tier3' THEN 1 END) as tier3_count,
       COUNT(DISTINCT dd.id) as documents_count
-    FROM districts d
-    LEFT JOIN district_keyword_scores ks ON d.nces_id = ks.nces_id
-    LEFT JOIN district_documents dd ON d.nces_id = dd.nces_id
-    GROUP BY d.state
-    ORDER BY d.state
+    FROM national_registry nr
+    LEFT JOIN district_keyword_scores ks ON nr.nces_id = ks.nces_id
+    LEFT JOIN district_documents dd ON nr.nces_id = dd.nces_id
+    WHERE nr.nces_id IS NOT NULL
+    GROUP BY nr.state
+    ORDER BY nr.state
   `)
 
   const states: StateStats[] = results.map((row: any) => {
@@ -144,13 +149,14 @@ export async function getStateDetail(stateCode: string): Promise<StateDetailResp
   const db = getDb()
   const upperState = stateCode.toUpperCase()
 
-  // Get district and superintendent counts
+  // Get district and superintendent counts from the golden merged table
   const districtStats = await db.execute(sql`
     SELECT
       COUNT(*) as total_districts,
-      COUNT(superintendent_name) as with_superintendent
-    FROM districts
-    WHERE state = ${upperState}
+      COUNT(superintendent_name) as with_superintendent,
+      COUNT(superintendent_email) as with_email
+    FROM national_registry
+    WHERE state = ${upperState} AND nces_id IS NOT NULL
   `)
 
   // Get score statistics for the state
@@ -163,21 +169,21 @@ export async function getStateDetail(stateCode: string): Promise<StateDetailResp
       COUNT(CASE WHEN ks.outreach_tier = 'tier1' THEN 1 END) as tier1_count,
       COUNT(CASE WHEN ks.outreach_tier = 'tier2' THEN 1 END) as tier2_count,
       COUNT(CASE WHEN ks.outreach_tier = 'tier3' THEN 1 END) as tier3_count
-    FROM districts d
-    INNER JOIN district_keyword_scores ks ON d.nces_id = ks.nces_id
-    WHERE d.state = ${upperState}
+    FROM national_registry nr
+    INNER JOIN district_keyword_scores ks ON nr.nces_id = ks.nces_id
+    WHERE nr.state = ${upperState}
   `)
 
   // Get top districts by total score
   const topDistricts = await db.execute(sql`
     SELECT
-      d.nces_id,
-      d.name,
+      nr.nces_id,
+      nr.district_name as name,
       ks.total_score::decimal as total_score,
       ks.outreach_tier as tier
-    FROM districts d
-    INNER JOIN district_keyword_scores ks ON d.nces_id = ks.nces_id
-    WHERE d.state = ${upperState}
+    FROM national_registry nr
+    INNER JOIN district_keyword_scores ks ON nr.nces_id = ks.nces_id
+    WHERE nr.state = ${upperState}
       AND ks.total_score IS NOT NULL
     ORDER BY ks.total_score::decimal DESC
     LIMIT 10
@@ -187,8 +193,8 @@ export async function getStateDetail(stateCode: string): Promise<StateDetailResp
   const docStats = await db.execute(sql`
     SELECT COUNT(*) as total_documents
     FROM district_documents dd
-    INNER JOIN districts d ON dd.nces_id = d.nces_id
-    WHERE d.state = ${upperState}
+    INNER JOIN national_registry nr ON dd.nces_id = nr.nces_id
+    WHERE nr.state = ${upperState}
   `)
 
   const dStats = districtStats[0] as any

@@ -97,16 +97,16 @@ export async function getCohortDetail(
       ci.nces_id,
       ci.notes,
       ci.added_at,
-      d.name AS district_name,
-      d.state,
-      d.city,
-      d.enrollment,
-      d.superintendent_name,
-      d.superintendent_email,
-      d.phone,
-      d.website_domain
+      nr.district_name,
+      nr.state,
+      nr.city,
+      nr.enrollment,
+      nr.superintendent_name,
+      nr.superintendent_email,
+      nr.phone,
+      nr.website AS website_domain
     FROM saved_cohort_items ci
-    LEFT JOIN districts d ON ci.nces_id = d.nces_id
+    LEFT JOIN national_registry nr ON ci.nces_id = nr.nces_id
     WHERE ci.cohort_id = ${cohortId}
     ORDER BY ci.added_at DESC
   `)

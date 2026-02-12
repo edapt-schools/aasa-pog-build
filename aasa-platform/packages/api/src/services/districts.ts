@@ -39,16 +39,42 @@ export async function listDistricts(
   // Has superintendent (email not null)
   if (params.hasSuperintendent !== undefined) {
     if (params.hasSuperintendent) {
-      conditions.push(sql`${schema.districts.superintendentEmail} IS NOT NULL`)
+      conditions.push(sql`
+        EXISTS (
+          SELECT 1
+          FROM national_registry nr
+          WHERE nr.nces_id = ${schema.districts.ncesId}
+            AND (nr.superintendent_name IS NOT NULL OR nr.superintendent_email IS NOT NULL)
+        )
+      `)
     } else {
-      conditions.push(sql`${schema.districts.superintendentEmail} IS NULL`)
+      conditions.push(sql`
+        NOT EXISTS (
+          SELECT 1
+          FROM national_registry nr
+          WHERE nr.nces_id = ${schema.districts.ncesId}
+            AND (nr.superintendent_name IS NOT NULL OR nr.superintendent_email IS NOT NULL)
+        )
+      `)
     }
   }
 
   // Name / superintendent search (case-insensitive)
   if (params.search) {
+    const likeValue = `%${params.search}%`
     conditions.push(
-      sql`(${ilike(schema.districts.name, `%${params.search}%`)} OR ${ilike(schema.districts.superintendentName, `%${params.search}%`)})`
+      sql`(
+        ${ilike(schema.districts.name, likeValue)}
+        OR EXISTS (
+          SELECT 1
+          FROM national_registry nr
+          WHERE nr.nces_id = ${schema.districts.ncesId}
+            AND (
+              nr.district_name ILIKE ${likeValue}
+              OR nr.superintendent_name ILIKE ${likeValue}
+            )
+        )
+      )`
     )
   }
 
@@ -130,8 +156,39 @@ export async function listDistricts(
     .offset(offset)
     .orderBy(schema.districts.name)
 
+  const ncesIds = districts
+    .map((row) => row.district.ncesId)
+    .filter((id): id is string => Boolean(id))
+
+  const nationalRows = ncesIds.length > 0
+    ? await db.execute(sql`
+      SELECT
+        nr.nces_id,
+        nr.district_name,
+        nr.state,
+        nr.city,
+        nr.county,
+        nr.enrollment,
+        nr.grades_served,
+        nr.locale_code,
+        nr.website,
+        nr.superintendent_name,
+        nr.superintendent_email,
+        nr.phone
+      FROM national_registry nr
+      WHERE nr.nces_id = ANY(${ncesIds}::text[])
+    `)
+    : []
+
+  const nationalMap = new Map<string, any>(
+    (nationalRows as any[]).map((row) => [row.nces_id as string, row]),
+  )
+
   return {
-    data: districts.map((row) => serializeDistrict(row.district)),
+    data: districts.map((row) => {
+      const merged = nationalMap.get(row.district.ncesId || '')
+      return serializeDistrictWithNational(row.district, merged)
+    }),
     pagination: {
       total: Number(total),
       limit,
@@ -160,6 +217,26 @@ export async function getDistrictByNcesId(
     return null
   }
 
+  const nationalRows = await db.execute(sql`
+    SELECT
+      nr.nces_id,
+      nr.district_name,
+      nr.state,
+      nr.city,
+      nr.county,
+      nr.enrollment,
+      nr.grades_served,
+      nr.locale_code,
+      nr.website,
+      nr.superintendent_name,
+      nr.superintendent_email,
+      nr.phone
+    FROM national_registry nr
+    WHERE nr.nces_id = ${ncesId}
+    LIMIT 1
+  `)
+  const national = (nationalRows as any[])[0]
+
   // Get keyword scores
   const [keywordScores] = await db
     .select()
@@ -174,7 +251,7 @@ export async function getDistrictByNcesId(
     .where(eq(schema.districtDocuments.ncesId, ncesId))
 
   return {
-    district: serializeDistrict(district),
+    district: serializeDistrictWithNational(district, national),
     keywordScores: keywordScores ? serializeKeywordScores(keywordScores) : null,
     documentCount: Number(documentCount),
   }
@@ -212,6 +289,30 @@ function serializeDistrict(district: typeof schema.districts.$inferSelect) {
     lastScrapedAt: district.lastScrapedAt?.toISOString() || null,
     frplPercent: district.frplPercent?.toString() || null,
     minorityPercent: district.minorityPercent?.toString() || null,
+  }
+}
+
+function serializeDistrictWithNational(
+  district: typeof schema.districts.$inferSelect,
+  national?: any,
+) {
+  const base = serializeDistrict(district)
+
+  if (!national) return base
+
+  return {
+    ...base,
+    name: national.district_name || base.name,
+    state: national.state || base.state,
+    city: national.city || base.city,
+    county: national.county || base.county,
+    enrollment: national.enrollment ?? base.enrollment,
+    gradesServed: national.grades_served || base.gradesServed,
+    localeCode: national.locale_code || base.localeCode,
+    websiteDomain: national.website || base.websiteDomain,
+    superintendentName: national.superintendent_name || base.superintendentName,
+    superintendentEmail: national.superintendent_email || base.superintendentEmail,
+    phone: national.phone || base.phone,
   }
 }
 

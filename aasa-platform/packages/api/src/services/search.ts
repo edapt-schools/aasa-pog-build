@@ -1,7 +1,6 @@
-import { sql, eq } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { getDb } from '../db/index.js'
 import { generateEmbedding } from './embeddings.js'
-import { districtKeywordScores, districts } from '../db/schema.js'
 import type {
   CommandRequest,
   CommandResponse,
@@ -47,23 +46,30 @@ export async function semanticSearch(
       d.document_type,
       d.document_title,
       d.document_category,
-      dist.id as district_id,
-      dist.nces_id as district_nces_id,
-      dist.name as district_name,
-      dist.state,
-      dist.city,
-      dist.superintendent_name,
-      dist.superintendent_email,
+      nr.id as district_id,
+      nr.nces_id as district_nces_id,
+      nr.district_name as district_name,
+      nr.state,
+      nr.city,
+      nr.county,
+      nr.enrollment,
+      nr.grades_served,
+      nr.locale_code,
+      nr.website,
+      nr.superintendent_name,
+      nr.superintendent_email,
+      nr.phone,
       e.embedding <=> ${embeddingString}::vector as distance
     FROM document_embeddings e
     JOIN district_documents d ON e.document_id = d.id
-    JOIN districts dist ON d.nces_id = dist.nces_id
+    JOIN national_registry nr ON d.nces_id = nr.nces_id
     WHERE e.embedding <=> ${embeddingString}::vector < ${distanceThreshold}
+      AND nr.nces_id IS NOT NULL
   `
 
   // Add state filter if specified
   if (params.state) {
-    query = sql`${query} AND dist.state = ${params.state}`
+    query = sql`${query} AND nr.state = ${params.state}`
   }
 
   // Add document type filter if specified
@@ -111,16 +117,16 @@ export async function semanticSearch(
       name: row.district_name,
       state: row.state,
       city: row.city,
-      county: null,
-      enrollment: null,
-      gradesServed: null,
-      localeCode: null,
+      county: row.county || null,
+      enrollment: row.enrollment ?? null,
+      gradesServed: row.grades_served || null,
+      localeCode: row.locale_code || null,
       frplPercent: null,
       minorityPercent: null,
-      websiteDomain: null,
+      websiteDomain: row.website || null,
       superintendentName: row.superintendent_name,
       superintendentEmail: row.superintendent_email,
-      phone: null,
+      phone: row.phone || null,
       address: null,
       lastScrapedAt: null,
       scrapeStatus: null,
@@ -174,19 +180,26 @@ export async function getSimilarDocuments(
       d.document_type,
       d.document_title,
       d.document_category,
-      dist.id as district_id,
-      dist.nces_id as district_nces_id,
-      dist.name as district_name,
-      dist.state,
-      dist.city,
-      dist.superintendent_name,
-      dist.superintendent_email,
+      nr.id as district_id,
+      nr.nces_id as district_nces_id,
+      nr.district_name as district_name,
+      nr.state,
+      nr.city,
+      nr.county,
+      nr.enrollment,
+      nr.grades_served,
+      nr.locale_code,
+      nr.website,
+      nr.superintendent_name,
+      nr.superintendent_email,
+      nr.phone,
       e.embedding <=> ${sourceEmbedding}::vector as distance
     FROM document_embeddings e
     JOIN district_documents d ON e.document_id = d.id
-    JOIN districts dist ON d.nces_id = dist.nces_id
+    JOIN national_registry nr ON d.nces_id = nr.nces_id
     WHERE
       e.document_id != ${documentId}
+      AND nr.nces_id IS NOT NULL
       AND e.embedding <=> ${sourceEmbedding}::vector < 0.7
     ORDER BY distance ASC
     LIMIT ${limit}
@@ -217,16 +230,16 @@ export async function getSimilarDocuments(
       name: row.district_name,
       state: row.state,
       city: row.city,
-      county: null,
-      enrollment: null,
-      gradesServed: null,
-      localeCode: null,
+      county: row.county || null,
+      enrollment: row.enrollment ?? null,
+      gradesServed: row.grades_served || null,
+      localeCode: row.locale_code || null,
       frplPercent: null,
       minorityPercent: null,
-      websiteDomain: null,
+      websiteDomain: row.website || null,
       superintendentName: row.superintendent_name,
       superintendentEmail: row.superintendent_email,
-      phone: null,
+      phone: row.phone || null,
       address: null,
       lastScrapedAt: null,
       scrapeStatus: null,
@@ -251,34 +264,35 @@ export async function getSimilarDocuments(
 export async function getKeywordEvidence(ncesId: string): Promise<KeywordEvidenceResponse> {
   const db = getDb()
 
-  // Get district and keyword scores
-  const result = await db
-    .select({
-      districtName: districts.name,
-      readinessScore: districtKeywordScores.readinessScore,
-      alignmentScore: districtKeywordScores.alignmentScore,
-      activationScore: districtKeywordScores.activationScore,
-      brandingScore: districtKeywordScores.brandingScore,
-      totalScore: districtKeywordScores.totalScore,
-      keywordMatches: districtKeywordScores.keywordMatches,
-      scoredAt: districtKeywordScores.scoredAt,
-    })
-    .from(districts)
-    .leftJoin(districtKeywordScores, eq(districts.ncesId, districtKeywordScores.ncesId))
-    .where(eq(districts.ncesId, ncesId))
-    .limit(1)
+  // Use golden merged district naming from national_registry.
+  const result = await db.execute(sql`
+    SELECT
+      COALESCE(nr.district_name, d.name) AS district_name,
+      ks.readiness_score,
+      ks.alignment_score,
+      ks.activation_score,
+      ks.branding_score,
+      ks.total_score,
+      ks.keyword_matches,
+      ks.scored_at
+    FROM districts d
+    LEFT JOIN national_registry nr ON nr.nces_id = d.nces_id
+    LEFT JOIN district_keyword_scores ks ON d.nces_id = ks.nces_id
+    WHERE d.nces_id = ${ncesId}
+    LIMIT 1
+  `)
 
   if (result.length === 0) {
     throw new Error('District not found')
   }
 
-  const data = result[0]
+  const data = result[0] as any
 
   // Helper function to parse category evidence from JSONB
   const parseCategoryEvidence = (categoryKey: string): CategoryEvidence | null => {
-    if (!data.keywordMatches) return null
+    if (!data.keyword_matches) return null
 
-    const keywordMatches = data.keywordMatches as any
+    const keywordMatches = data.keyword_matches as any
     const categoryData = keywordMatches[categoryKey]
 
     if (!categoryData) return null
@@ -334,20 +348,20 @@ export async function getKeywordEvidence(ncesId: string): Promise<KeywordEvidenc
   const branding = parseCategoryEvidence('branding')
 
   // Add scores to evidence
-  if (readiness) readiness.score = data.readinessScore ? parseFloat(data.readinessScore) : null
-  if (alignment) alignment.score = data.alignmentScore ? parseFloat(data.alignmentScore) : null
-  if (activation) activation.score = data.activationScore ? parseFloat(data.activationScore) : null
-  if (branding) branding.score = data.brandingScore ? parseFloat(data.brandingScore) : null
+  if (readiness) readiness.score = data.readiness_score ? parseFloat(data.readiness_score) : null
+  if (alignment) alignment.score = data.alignment_score ? parseFloat(data.alignment_score) : null
+  if (activation) activation.score = data.activation_score ? parseFloat(data.activation_score) : null
+  if (branding) branding.score = data.branding_score ? parseFloat(data.branding_score) : null
 
   return {
     ncesId,
-    districtName: data.districtName,
+    districtName: data.district_name,
     readiness,
     alignment,
     activation,
     branding,
-    totalScore: data.totalScore ? parseFloat(data.totalScore) : null,
-    scoredAt: data.scoredAt ? data.scoredAt.toISOString() : null,
+    totalScore: data.total_score ? parseFloat(data.total_score) : null,
+    scoredAt: data.scored_at ? new Date(data.scored_at).toISOString() : null,
   }
 }
 
@@ -522,15 +536,27 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
     suppressedSet.add(excluded)
   }
 
+  // Two-stage semantic search: pre-filter top-K most relevant chunks, then aggregate per district.
+  // This avoids the old approach of scanning ALL 83K embeddings (which made every query return
+  // the same districts since static keyword scores dominated the ranking).
   const rows = await db.execute(sql`
-    WITH semantic AS (
+    WITH top_chunks AS (
+      SELECT
+        e.document_id,
+        (1 - (e.embedding <=> ${embeddingString}::vector))::decimal AS similarity
+      FROM document_embeddings e
+      WHERE (1 - (e.embedding <=> ${embeddingString}::vector)) > 0.25
+      ORDER BY e.embedding <=> ${embeddingString}::vector
+      LIMIT 500
+    ),
+    semantic AS (
       SELECT
         dd.nces_id,
-        MAX(1 - ((e.embedding <=> ${embeddingString}::vector) / 2.0))::decimal AS semantic_max,
-        AVG(1 - ((e.embedding <=> ${embeddingString}::vector) / 2.0))::decimal AS semantic_avg,
+        MAX(tc.similarity)::decimal AS semantic_max,
+        AVG(tc.similarity)::decimal AS semantic_avg,
         COUNT(*)::int AS semantic_hits
-      FROM document_embeddings e
-      JOIN district_documents dd ON e.document_id = dd.id
+      FROM top_chunks tc
+      JOIN district_documents dd ON tc.document_id = dd.id
       GROUP BY dd.nces_id
     )
     SELECT
@@ -539,10 +565,10 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       d.state,
       d.city,
       d.enrollment,
-      d.website_domain,
-      d.superintendent_name,
-      d.superintendent_email,
-      d.phone,
+      COALESCE(nr.website, d.website_domain) AS website_domain,
+      COALESCE(nr.superintendent_name, d.superintendent_name) AS superintendent_name,
+      COALESCE(nr.superintendent_email, d.superintendent_email) AS superintendent_email,
+      COALESCE(nr.phone, d.phone) AS phone,
       d.frpl_percent,
       d.minority_percent,
       s.readiness_score,
@@ -555,9 +581,11 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       COALESCE(semantic.semantic_avg, 0)::decimal AS semantic_avg,
       COALESCE(semantic.semantic_hits, 0)::int AS semantic_hits
     FROM districts d
+    LEFT JOIN national_registry nr ON d.nces_id = nr.nces_id
     LEFT JOIN district_keyword_scores s ON d.nces_id = s.nces_id
     LEFT JOIN semantic ON d.nces_id = semantic.nces_id
     WHERE d.nces_id IS NOT NULL
+      AND (semantic.nces_id IS NOT NULL OR s.total_score IS NOT NULL)
     ORDER BY semantic_max DESC, s.total_score DESC NULLS LAST
   `)
 
@@ -601,8 +629,11 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       const eligibilityBoost =
         (parsedGrantCriteria?.frplMin && toNumber(row.frpl_percent) >= parsedGrantCriteria.frplMin ? 0.5 : 0) +
         (parsedGrantCriteria?.minorityMin && toNumber(row.minority_percent) >= parsedGrantCriteria.minorityMin ? 0.5 : 0)
-      const semanticBoost = (semanticMax * 4) + Math.min(2, Math.log10(semanticHits + 1))
-      const composite = Math.max(0, total + semanticBoost + eligibilityBoost - engagementPenalty)
+      // Semantic relevance is the PRIMARY ranking signal (query-specific).
+      // Keyword score is a secondary boost (static, same for every query).
+      const semanticScore = (semanticMax * 6) + (semanticAvg * 2) + Math.min(1.5, Math.log10(semanticHits + 1))
+      const keywordBoost = total * 0.5
+      const composite = Math.max(0, semanticScore + keywordBoost + eligibilityBoost - engagementPenalty)
       const confidence = Math.min(0.98, Math.max(0.2, (composite + semanticAvg * 2) / 12))
       const confidenceBand = toConfidenceBand(confidence)
       const sourceExcerpts: Array<{ documentUrl?: string | null; keyword: string; excerpt: string }> = []
@@ -695,7 +726,7 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
 
   const reasoningSteps = [
     `Intent classified as "${intent}".`,
-    `Scanned full corpus: ${rawRows.length} districts with live semantic aggregation over all embeddings.`,
+    `Pre-filtered top-500 most relevant embedding chunks, then aggregated across ${rawRows.length} candidate districts.`,
     `Suppressed ${suppressedSet.size} previously engaged districts in last ${suppressionDays} days.`,
     `Candidates after suppression: ${afterSuppression.length}.`,
     `After state and score criteria: ${afterScoreThresholds.length}.`,
@@ -707,7 +738,7 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
     prompt,
     intent,
     requestedLimit,
-    scanMode: 'full_corpus_embeddings_and_scores',
+    scanMode: 'topK_prefilter_500_chunks',
     confidenceThreshold,
     suppressionDays,
     suppressedCount: suppressedSet.size,
@@ -742,28 +773,28 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       confidenceThreshold,
       explanation: `Weekly proactive briefing: ${briefingSummary}`,
       reasoning: {
-        summary: 'Generated from keyword-score ranking plus engagement suppression and confidence gating.',
-        steps: reasoningSteps,
-      },
-      grantCriteria: parsedGrantCriteria,
-      districts: districtsOut,
-      generatedAt: new Date().toISOString(),
-    }
+      summary: 'Ranked by semantic similarity to query (top-500 chunks), with keyword scores as a secondary boost.',
+      steps: reasoningSteps,
+    },
+    grantCriteria: parsedGrantCriteria,
+    districts: districtsOut,
+    generatedAt: new Date().toISOString(),
   }
+}
 
   const explanation =
     intent === 'next_hottest_uncontacted'
       ? 'Prioritized uncontacted districts using score and suppression logic.'
       : intent === 'grant_match'
         ? 'Matched districts against extracted and explicit grant criteria with confidence scoring.'
-        : 'Returned district matches based on existing district scoring and evidence.'
+        : 'Ranked districts by semantic relevance to your query, boosted by keyword scoring and evidence.'
 
   return {
     intent,
     confidenceThreshold,
     explanation,
     reasoning: {
-      summary: 'Generated from keyword-score ranking plus engagement suppression and confidence gating.',
+      summary: 'Ranked by semantic similarity to query (top-500 chunks), with keyword scores as a secondary boost.',
       steps: reasoningSteps,
     },
     grantCriteria: parsedGrantCriteria,
@@ -784,7 +815,7 @@ export async function getDistrictWhyDetails(
   const rows = await db.execute(sql`
     SELECT
       d.nces_id,
-      d.name,
+      COALESCE(nr.district_name, d.name) AS name,
       s.readiness_score,
       s.alignment_score,
       s.activation_score,
@@ -792,6 +823,7 @@ export async function getDistrictWhyDetails(
       s.total_score,
       s.keyword_matches
     FROM districts d
+    LEFT JOIN national_registry nr ON nr.nces_id = d.nces_id
     LEFT JOIN district_keyword_scores s ON d.nces_id = s.nces_id
     WHERE d.nces_id = ${ncesId}
     LIMIT 1

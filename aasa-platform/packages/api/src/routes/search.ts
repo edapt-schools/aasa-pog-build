@@ -2,6 +2,7 @@ import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { requireAuth } from '../middleware/auth.js'
 import * as searchService from '../services/search.js'
+import * as telemetryService from '../services/search-telemetry.js'
 import type { CommandRequest, SemanticSearchParams } from '@aasa-platform/shared'
 
 const router = Router()
@@ -113,14 +114,21 @@ router.post('/command', async (req: Request, res: Response) => {
       })
     }
 
-    const response = await searchService.runCommand({
+    const normalizedRequest: CommandRequest = {
       ...body,
       prompt: body.prompt.trim(),
       confidenceThreshold:
         body.confidenceThreshold !== undefined
           ? Math.min(0.95, Math.max(0.2, Number(body.confidenceThreshold)))
           : 0.6,
-    })
+    }
+
+    const response = await searchService.runCommand(normalizedRequest)
+
+    // Best-effort telemetry: do not fail user search if logging fails.
+    telemetryService
+      .logCommandSearch(req.userId, normalizedRequest, response)
+      .catch((err) => console.warn('Failed to write command_search_logs:', err))
 
     res.json(response)
   } catch (error) {
@@ -295,6 +303,24 @@ router.get('/health', async (_req: Request, res: Response) => {
     })
   } catch (error) {
     res.status(500).json({ error: 'Failed to check search health' })
+  }
+})
+
+/**
+ * GET /api/search/telemetry
+ * Returns weekly query/recommendation telemetry for Command Center.
+ */
+router.get('/telemetry', async (req: Request, res: Response) => {
+  try {
+    const days = req.query.days ? Number(req.query.days) : 7
+    const summary = await telemetryService.getCommandSearchTelemetrySummary(req.userId, days)
+    res.json(summary)
+  } catch (error) {
+    console.error('Command telemetry error:', error)
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to load command telemetry',
+    })
   }
 })
 
