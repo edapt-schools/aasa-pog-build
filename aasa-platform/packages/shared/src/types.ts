@@ -401,3 +401,71 @@ export interface CommandResponse {
   districts: CommandDistrictResult[]
   generatedAt: string
 }
+
+// =============================================================================
+// Cohort Types
+// =============================================================================
+
+export interface SavedCohort {
+  id: string
+  userId: string
+  name: string
+  description: string | null
+  createdAt: string
+  updatedAt: string
+  itemCount?: number
+  items?: SavedCohortItem[]
+}
+
+export interface SavedCohortItem {
+  id: string
+  cohortId: string
+  ncesId: string
+  notes: string | null
+  addedAt: string
+  district?: District
+}
+
+export interface CreateCohortRequest {
+  name: string
+  description?: string
+}
+
+export interface AddCohortDistrictsRequest {
+  ncesIds: string[]
+}
+
+export interface ListCohortsResponse {
+  cohorts: SavedCohort[]
+}
+
+export interface CohortDetailResponse {
+  cohort: SavedCohort
+}
+
+// =============================================================================
+// Saved Search Types
+// =============================================================================
+
+export interface SavedSearchRecord {
+  id: string
+  userId: string
+  name: string
+  query: string
+  intent: string | null
+  filters: Record<string, unknown> | null
+  resultCount: number | null
+  createdAt: string
+}
+
+export interface CreateSavedSearchRequest {
+  name: string
+  query: string
+  intent?: string
+  filters?: Record<string, unknown>
+  resultCount?: number
+}
+
+export interface ListSavedSearchesResponse {
+  searches: SavedSearchRecord[]
+}
