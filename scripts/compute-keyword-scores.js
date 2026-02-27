@@ -547,173 +547,299 @@ function determineOutreachTier(totalScore, categoryScores) {
 // MAIN FUNCTION
 // =============================================================================
 
+// =============================================================================
+// Connection management — reconnect per batch to survive Supabase timeouts
+// =============================================================================
+
+async function createClient() {
+  const client = new Client({
+    connectionString: DATABASE_URL,
+    statement_timeout: 30000,
+    query_timeout: 30000,
+  });
+  // Prevent unhandled 'error' events from crashing the process.
+  // Connection errors are caught by our try/catch in the processing loop.
+  client.on('error', (err) => {
+    console.error(`  [pg] Background connection error: ${err.message}`);
+  });
+  await client.connect();
+  return client;
+}
+
+async function safeEnd(client) {
+  try { await client.end(); } catch (_) { /* already closed */ }
+}
+
+// Process a single district, returning its stats contribution
+async function processDistrict(client, ncesId) {
+  const docsResult = await client.query(`
+    SELECT id, document_url, document_category, extracted_text, discovered_at
+    FROM district_documents
+    WHERE nces_id = $1 AND extracted_text IS NOT NULL
+  `, [ncesId]);
+
+  if (docsResult.rows.length === 0) return null;
+
+  const allMatches = {
+    readiness: [],
+    alignment: [],
+    activation: [],
+    branding: []
+  };
+
+  for (const doc of docsResult.rows) {
+    const docMatches = analyzeText(
+      doc.extracted_text,
+      doc.discovered_at,
+      doc.document_url,
+      doc.document_category
+    );
+
+    for (const category of Object.keys(allMatches)) {
+      for (const match of docMatches[category]) {
+        allMatches[category].push({
+          ...match,
+          source_doc: doc.document_url
+        });
+      }
+    }
+  }
+
+  const categoryScores = {
+    readiness: calculateCategoryScore(allMatches.readiness),
+    alignment: calculateCategoryScore(allMatches.alignment),
+    activation: calculateCategoryScore(allMatches.activation),
+    branding: calculateCategoryScore(allMatches.branding)
+  };
+
+  const totalScore = calculateTotalScore(categoryScores);
+  const outreachTier = determineOutreachTier(totalScore, categoryScores);
+
+  const keywordMatchesJson = {};
+  for (const [category, matches] of Object.entries(allMatches)) {
+    if (matches.length > 0) {
+      keywordMatchesJson[category] = matches.map(m => ({
+        keyword: m.keyword,
+        weight: m.adjustedWeight,
+        source_doc: m.source_doc,
+        context: m.context,
+        ...(m.dampened ? { dampened: true } : {})
+      }));
+    }
+  }
+
+  await client.query(`
+    INSERT INTO district_keyword_scores
+    (nces_id, readiness_score, alignment_score, activation_score, branding_score,
+     total_score, outreach_tier, keyword_matches, documents_analyzed, scored_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+    ON CONFLICT (nces_id) DO UPDATE SET
+      readiness_score = EXCLUDED.readiness_score,
+      alignment_score = EXCLUDED.alignment_score,
+      activation_score = EXCLUDED.activation_score,
+      branding_score = EXCLUDED.branding_score,
+      total_score = EXCLUDED.total_score,
+      outreach_tier = EXCLUDED.outreach_tier,
+      keyword_matches = EXCLUDED.keyword_matches,
+      documents_analyzed = EXCLUDED.documents_analyzed,
+      updated_at = NOW()
+  `, [
+    ncesId,
+    categoryScores.readiness,
+    categoryScores.alignment,
+    categoryScores.activation,
+    categoryScores.branding,
+    totalScore,
+    outreachTier,
+    JSON.stringify(keywordMatchesJson),
+    docsResult.rows.length
+  ]);
+
+  return {
+    docs: docsResult.rows.length,
+    hasKeywords: totalScore > 0,
+    tier: outreachTier
+  };
+}
+
+// =============================================================================
+// MAIN FUNCTION — batch processing with reconnection
+// =============================================================================
+
+const BATCH_SIZE = 100;
+
 async function main() {
-  // Parse args
   const args = process.argv.slice(2);
   let batchId = null;
+  let resume = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--batch-id' && args[i + 1]) {
       batchId = args[i + 1];
       i++;
     }
+    if (args[i] === '--resume') {
+      resume = true;
+    }
   }
-
-  const client = new Client({ connectionString: DATABASE_URL });
-  await client.connect();
 
   console.log('=== Phase 2C: Compute Keyword Taxonomy Scores ===\n');
 
-  // Get all districts with documents
-  let query = `
-    SELECT DISTINCT nces_id
-    FROM district_documents
-  `;
-  const params = [];
+  // Get district list with a short-lived connection
+  let ncesIds;
+  {
+    const listClient = await createClient();
+    let query, params = [];
 
-  if (batchId) {
-    // If batch ID specified, only score districts from that batch
-    query = `
-      SELECT DISTINCT nces_id
-      FROM document_crawl_log
-      WHERE crawl_batch_id = $1
-    `;
-    params.push(batchId);
-    console.log(`Filtering by batch ID: ${batchId}`);
+    if (batchId) {
+      query = `SELECT DISTINCT nces_id FROM document_crawl_log WHERE crawl_batch_id = $1`;
+      params.push(batchId);
+      console.log(`Filtering by batch ID: ${batchId}`);
+    } else if (resume) {
+      // Only score districts not yet scored with the new engine (scored_at still old)
+      query = `
+        SELECT DISTINCT dd.nces_id
+        FROM district_documents dd
+        LEFT JOIN district_keyword_scores s ON dd.nces_id = s.nces_id
+        WHERE s.nces_id IS NULL
+           OR s.scored_at < NOW() - INTERVAL '6 hours'
+        ORDER BY dd.nces_id
+      `;
+      console.log('Resume mode: only scoring districts not yet updated in the last 6 hours');
+    } else {
+      query = `SELECT DISTINCT nces_id FROM district_documents ORDER BY nces_id`;
+    }
+
+    const districtsResult = await listClient.query(query, params);
+    ncesIds = districtsResult.rows.map(r => r.nces_id);
+    await safeEnd(listClient);
   }
 
-  const districtsResult = await client.query(query, params);
-  const ncesIds = districtsResult.rows.map(r => r.nces_id);
+  console.log(`Found ${ncesIds.length} districts to process\n`);
 
-  console.log(`Found ${ncesIds.length} districts with documents\n`);
+  if (ncesIds.length === 0) {
+    console.log('Nothing to do.');
+    return;
+  }
 
-  // Stats
   const stats = {
     processed: 0,
+    skipped: 0,
     withKeywords: 0,
     tier1: 0,
     tier2: 0,
     tier3: 0,
-    totalDocuments: 0
+    totalDocuments: 0,
+    errors: 0
   };
 
-  // Process each district
-  for (const ncesId of ncesIds) {
-    // Get all documents for this district
-    const docsResult = await client.query(`
-      SELECT id, document_url, document_category, extracted_text, discovered_at
-      FROM district_documents
-      WHERE nces_id = $1 AND extracted_text IS NOT NULL
-    `, [ncesId]);
+  // Process in batches with fresh connections
+  const totalBatches = Math.ceil(ncesIds.length / BATCH_SIZE);
 
-    if (docsResult.rows.length === 0) continue;
+  for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+    const batchStart = batchNum * BATCH_SIZE;
+    const batchEnd = Math.min(batchStart + BATCH_SIZE, ncesIds.length);
+    const batchIds = ncesIds.slice(batchStart, batchEnd);
 
-    // Aggregate matches across all documents
-    const allMatches = {
-      readiness: [],
-      alignment: [],
-      activation: [],
-      branding: []
-    };
+    let client;
+    let retries = 0;
+    const maxRetries = 3;
 
-    for (const doc of docsResult.rows) {
-      const docMatches = analyzeText(
-        doc.extracted_text,
-        doc.discovered_at,
-        doc.document_url,
-        doc.document_category
-      );
+    while (retries < maxRetries) {
+      try {
+        client = await createClient();
+        break;
+      } catch (err) {
+        retries++;
+        console.error(`Connection attempt ${retries}/${maxRetries} failed: ${err.message}`);
+        if (retries >= maxRetries) {
+          throw new Error(`Failed to connect after ${maxRetries} attempts`);
+        }
+        await new Promise(r => setTimeout(r, 2000 * retries));
+      }
+    }
 
-      // Merge matches
-      for (const category of Object.keys(allMatches)) {
-        for (const match of docMatches[category]) {
-          allMatches[category].push({
-            ...match,
-            source_doc: doc.document_url
-          });
+    console.log(`\nBatch ${batchNum + 1}/${totalBatches} (districts ${batchStart + 1}-${batchEnd})`);
+
+    for (const ncesId of batchIds) {
+      try {
+        const result = await processDistrict(client, ncesId);
+
+        if (result === null) {
+          stats.skipped++;
+          continue;
+        }
+
+        stats.processed++;
+        stats.totalDocuments += result.docs;
+        if (result.hasKeywords) stats.withKeywords++;
+        stats[result.tier]++;
+
+        if (stats.processed % 100 === 0) {
+          console.log(`  Processed ${stats.processed}/${ncesIds.length} districts (${stats.errors} errors)...`);
+        }
+      } catch (err) {
+        stats.errors++;
+        console.error(`  Error processing ${ncesId}: ${err.message}`);
+
+        // If it's a connection error, reconnect and retry this district
+        const isConnError = err.message.includes('Connection terminated')
+          || err.message.includes('ECONNRESET')
+          || err.message.includes('ETIMEDOUT')
+          || err.message.includes('read timeout')
+          || err.message.includes('Query read timeout')
+          || err.code === 'ETIMEDOUT'
+          || err.code === 'ECONNRESET';
+
+        if (isConnError) {
+          console.log('  Connection lost. Reconnecting after 2s pause...');
+          await safeEnd(client);
+          await new Promise(r => setTimeout(r, 2000));
+          try {
+            client = await createClient();
+            // Retry the failed district
+            const retryResult = await processDistrict(client, ncesId);
+            if (retryResult) {
+              stats.processed++;
+              stats.errors--; // Undo the error count
+              stats.totalDocuments += retryResult.docs;
+              if (retryResult.hasKeywords) stats.withKeywords++;
+              stats[retryResult.tier]++;
+            }
+          } catch (retryErr) {
+            console.error(`  Retry also failed for ${ncesId}: ${retryErr.message}`);
+            // Try one more fresh connection for the rest of the batch
+            await safeEnd(client);
+            await new Promise(r => setTimeout(r, 3000));
+            try { client = await createClient(); } catch (_) {}
+          }
         }
       }
     }
 
-    // Calculate scores
-    const categoryScores = {
-      readiness: calculateCategoryScore(allMatches.readiness),
-      alignment: calculateCategoryScore(allMatches.alignment),
-      activation: calculateCategoryScore(allMatches.activation),
-      branding: calculateCategoryScore(allMatches.branding)
-    };
+    await safeEnd(client);
 
-    // FIX #5: Weighted average instead of equal 1/4
-    const totalScore = calculateTotalScore(categoryScores);
-
-    const outreachTier = determineOutreachTier(totalScore, categoryScores);
-
-    // Prepare keyword matches JSON
-    const keywordMatchesJson = {};
-    for (const [category, matches] of Object.entries(allMatches)) {
-      if (matches.length > 0) {
-        keywordMatchesJson[category] = matches.map(m => ({
-          keyword: m.keyword,
-          weight: m.adjustedWeight,
-          source_doc: m.source_doc,
-          context: m.context,
-          ...(m.dampened ? { dampened: true } : {})
-        }));
-      }
-    }
-
-    // Upsert into district_keyword_scores
-    await client.query(`
-      INSERT INTO district_keyword_scores
-      (nces_id, readiness_score, alignment_score, activation_score, branding_score,
-       total_score, outreach_tier, keyword_matches, documents_analyzed, scored_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-      ON CONFLICT (nces_id) DO UPDATE SET
-        readiness_score = EXCLUDED.readiness_score,
-        alignment_score = EXCLUDED.alignment_score,
-        activation_score = EXCLUDED.activation_score,
-        branding_score = EXCLUDED.branding_score,
-        total_score = EXCLUDED.total_score,
-        outreach_tier = EXCLUDED.outreach_tier,
-        keyword_matches = EXCLUDED.keyword_matches,
-        documents_analyzed = EXCLUDED.documents_analyzed,
-        updated_at = NOW()
-    `, [
-      ncesId,
-      categoryScores.readiness,
-      categoryScores.alignment,
-      categoryScores.activation,
-      categoryScores.branding,
-      totalScore,
-      outreachTier,
-      JSON.stringify(keywordMatchesJson),
-      docsResult.rows.length
-    ]);
-
-    // Update stats
-    stats.processed++;
-    stats.totalDocuments += docsResult.rows.length;
-    if (totalScore > 0) stats.withKeywords++;
-    stats[outreachTier]++;
-
-    // Progress
-    if (stats.processed % 50 === 0) {
-      console.log(`Processed ${stats.processed}/${ncesIds.length} districts...`);
+    // Brief pause between batches to be kind to the connection pool
+    if (batchNum < totalBatches - 1) {
+      await new Promise(r => setTimeout(r, 500));
     }
   }
 
   // Summary
   console.log('\n=== SCORING COMPLETE ===\n');
   console.log(`Districts processed: ${stats.processed}`);
-  console.log(`Districts with keyword matches: ${stats.withKeywords} (${(stats.withKeywords/stats.processed*100).toFixed(1)}%)`);
+  console.log(`Districts skipped (no docs): ${stats.skipped}`);
+  console.log(`Errors: ${stats.errors}`);
+  console.log(`Districts with keyword matches: ${stats.withKeywords} (${(stats.withKeywords/Math.max(stats.processed,1)*100).toFixed(1)}%)`);
   console.log(`Total documents analyzed: ${stats.totalDocuments}`);
   console.log('\nOutreach Tier Distribution:');
-  console.log(`  Tier 1 (Strong signals):  ${stats.tier1} (${(stats.tier1/stats.processed*100).toFixed(1)}%)`);
-  console.log(`  Tier 2 (Moderate):        ${stats.tier2} (${(stats.tier2/stats.processed*100).toFixed(1)}%)`);
-  console.log(`  Tier 3 (Limited):         ${stats.tier3} (${(stats.tier3/stats.processed*100).toFixed(1)}%)`);
+  console.log(`  Tier 1 (Strong signals):  ${stats.tier1} (${(stats.tier1/Math.max(stats.processed,1)*100).toFixed(1)}%)`);
+  console.log(`  Tier 2 (Moderate):        ${stats.tier2} (${(stats.tier2/Math.max(stats.processed,1)*100).toFixed(1)}%)`);
+  console.log(`  Tier 3 (Limited):         ${stats.tier3} (${(stats.tier3/Math.max(stats.processed,1)*100).toFixed(1)}%)`);
 
   // Show top scoring districts
-  const topResult = await client.query(`
+  const finalClient = await createClient();
+  const topResult = await finalClient.query(`
     SELECT s.nces_id, d.district_name, d.state,
            s.readiness_score, s.alignment_score, s.activation_score,
            s.total_score, s.outreach_tier
@@ -730,7 +856,10 @@ async function main() {
     console.log(`  Total: ${parseFloat(row.total_score).toFixed(2)} | Readiness: ${parseFloat(row.readiness_score).toFixed(2)} | Alignment: ${parseFloat(row.alignment_score).toFixed(2)} | Activation: ${parseFloat(row.activation_score).toFixed(2)} | Tier: ${row.outreach_tier}`);
   }
 
-  await client.end();
+  await safeEnd(finalClient);
 }
 
-main().catch(console.error);
+main().catch(err => {
+  console.error('Fatal error:', err);
+  process.exit(1);
+});
