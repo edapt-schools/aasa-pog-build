@@ -279,10 +279,10 @@ export default function Discovery() {
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
-                title="Districts actively discussing Portrait-to-Practice"
+                title="Districts actively discussing Portrait-to-Practice. They have a vision and need implementation support."
               >
                 <TrendingUp className="w-3.5 h-3.5" />
-                Warm Leads
+                Portrait-to-Practice
               </button>
               <button
                 type="button"
@@ -292,10 +292,10 @@ export default function Discovery() {
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
-                title="Districts not yet talking about Portrait of a Graduate"
+                title="Districts not yet talking about Portrait of a Graduate. They haven't started and need the foundational work."
               >
                 <TrendingDown className="w-3.5 h-3.5" />
-                New Prospects
+                Portrait-of-a-Graduate
               </button>
             </div>
 

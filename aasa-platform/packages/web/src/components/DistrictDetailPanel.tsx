@@ -4,6 +4,7 @@ import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { Card, CardHeader, CardContent } from './ui/card'
 import { KeywordScoreCard } from './KeywordScoreCard'
+import { ScoreBreakdown } from './ScoreBreakdown'
 import { DocumentList } from './DocumentList'
 import { useDistrictDetail } from '../hooks/useDistrictDetail'
 import { useDistrictDocuments } from '../hooks/useDistrictDocuments'
@@ -310,6 +311,11 @@ export function DistrictDetailPanel({ ncesId, onClose }: DistrictDetailPanelProp
               {/* Keyword Scores */}
               {keywordScores && (
                 <KeywordScoreCard scores={keywordScores} showDetails={true} />
+              )}
+
+              {/* Score Breakdown — shows WHY this district scored what it did */}
+              {keywordScores && (
+                <ScoreBreakdown keywordMatches={keywordScores.keywordMatches} />
               )}
             </>
           )}
