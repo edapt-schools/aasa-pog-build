@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, inArray, ilike, sql, count } from 'drizzle-orm'
+import { eq, and, gte, lte, inArray, ilike, sql, count, desc, asc } from 'drizzle-orm'
 import { getDb } from '../db/index.js'
 import * as schema from '../db/schema.js'
 import type {
@@ -127,8 +127,26 @@ export async function listDistricts(
     conditions.push(sql`${schema.districtKeywordScores.brandingScore}::decimal >= ${params.brandingScoreMin}`)
   }
 
+  // For new_prospects sort, exclude districts with zero documents
+  if (params.sort === 'new_prospects') {
+    conditions.push(sql`(
+      SELECT COUNT(*) FROM district_documents dd
+      WHERE dd.nces_id = ${schema.districts.ncesId}
+    ) > 0`)
+  }
+
   // Build query
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+  // Determine sort order
+  let orderByClause
+  if (params.sort === 'warm_leads') {
+    orderByClause = desc(sql`COALESCE(${schema.districtKeywordScores.totalScore}, 0)`)
+  } else if (params.sort === 'new_prospects') {
+    orderByClause = asc(sql`COALESCE(${schema.districtKeywordScores.totalScore}, 0)`)
+  } else {
+    orderByClause = asc(schema.districts.name)
+  }
 
   // Get total count
   const [{ total }] = await db
@@ -154,7 +172,7 @@ export async function listDistricts(
     .where(whereClause)
     .limit(limit)
     .offset(offset)
-    .orderBy(schema.districts.name)
+    .orderBy(orderByClause)
 
   const ncesIds = districts
     .map((row) => row.district.ncesId)
@@ -187,7 +205,10 @@ export async function listDistricts(
   return {
     data: districts.map((row) => {
       const merged = nationalMap.get(row.district.ncesId || '')
-      return serializeDistrictWithNational(row.district, merged)
+      return {
+        ...serializeDistrictWithNational(row.district, merged),
+        outreachTier: row.keywordScores?.outreachTier || null,
+      }
     }),
     pagination: {
       total: Number(total),
@@ -271,8 +292,40 @@ export async function getDistrictDocuments(
     .where(eq(schema.districtDocuments.ncesId, ncesId))
     .orderBy(schema.districtDocuments.discoveredAt)
 
+  // Get latest crawl status for each document URL
+  const crawlStatusRows = documents.length > 0
+    ? await db.execute(sql`
+        SELECT DISTINCT ON (url)
+          url,
+          status,
+          http_status,
+          crawled_at
+        FROM document_crawl_log
+        WHERE nces_id = ${ncesId}
+        ORDER BY url, crawled_at DESC
+      `)
+    : []
+
+  const crawlStatusMap = new Map<string, { status: string; httpStatus: number | null; crawledAt: string }>(
+    (crawlStatusRows as any[]).map((row) => [
+      row.url as string,
+      {
+        status: row.status as string,
+        httpStatus: row.http_status as number | null,
+        crawledAt: row.crawled_at ? new Date(row.crawled_at).toISOString() : '',
+      },
+    ]),
+  )
+
   return {
-    data: documents.map(serializeDocument),
+    data: documents.map((doc) => {
+      const crawlInfo = crawlStatusMap.get(doc.documentUrl)
+      return {
+        ...serializeDocument(doc),
+        lastCrawlStatus: crawlInfo?.status || null,
+        lastCrawlHttpStatus: crawlInfo?.httpStatus || null,
+      }
+    }),
     total: documents.length,
   }
 }

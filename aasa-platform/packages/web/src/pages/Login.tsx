@@ -15,6 +15,18 @@ export default function Login() {
     }
   }, [user, navigate])
 
+  // Set page title and meta description
+  useEffect(() => {
+    document.title = 'AASA District Intelligence Platform'
+    let meta = document.querySelector('meta[name="description"]')
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.setAttribute('name', 'description')
+      document.head.appendChild(meta)
+    }
+    meta.setAttribute('content', 'District discovery, grant building, and intelligence platform for AASA.')
+  }, [])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -30,8 +42,13 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
+          <img
+            src="/aasa-favicon.png"
+            alt="AASA logo"
+            className="w-16 h-16 mx-auto mb-4 object-contain"
+          />
           <h1 className="text-heading-2 font-semibold text-foreground mb-2">
-            AASA District Intelligence
+            AASA District Intelligence Platform
           </h1>
           <p className="text-body text-muted-foreground">
             Sign in to access the district intelligence platform
@@ -50,20 +67,22 @@ export default function Login() {
 
         <div className="bg-card rounded-lg border border-border p-8 shadow-sm space-y-3">
           <button
+            type="button"
             onClick={() => login('azure')}
             className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity font-medium"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M11.4 24H0l1.2-11.4L11.4 24zm-.6-13.4L0 12.6 10.8 0v10.6zm12 1.4H12L23.4 1.2 22.8 12zM12 13.2L22.8 24H12v-10.8z" />
             </svg>
             Sign in with Microsoft
           </button>
 
           <button
+            type="button"
             onClick={() => login('google')}
             className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-card text-foreground border border-border rounded-lg hover:bg-muted transition-colors font-medium"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />

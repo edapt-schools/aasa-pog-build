@@ -1,0 +1,990 @@
+[
+  {
+    "nces_id": "4022770",
+    "name": "OKLAHOMA CITY",
+    "state": "OK",
+    "enrollment": 32750,
+    "current_score": 2.75,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 3.18,
+    "document_count": 21,
+    "documents_analyzed": 21,
+    "category_scores": {
+      "readiness": 5.23,
+      "alignment": 1.8,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "rationale": "Large district with strong keyword signals (score 3.18) across 21 documents showing Portrait of Graduate / strategic planning, educator competencies / instructional frameworks, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "3904504",
+    "name": "Westerville City",
+    "state": "OH",
+    "enrollment": 14589,
+    "current_score": 2.51,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 3.03,
+    "document_count": 5,
+    "documents_analyzed": 5,
+    "category_scores": {
+      "readiness": 4.9,
+      "alignment": 0,
+      "activation": 3.2,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 1: readiness 4.9 below threshold (>=5 required). Keywords found: [application_of_learning, cornerstone, graduate_competencies, portrait_of_graduate, strategic_framework]. Strong signals present but below stricter new thresholds."
+  },
+  {
+    "nces_id": "1716830",
+    "name": "Glenbard Twp HSD 87",
+    "state": "IL",
+    "enrollment": 7810,
+    "current_score": 3.05,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.93,
+    "document_count": 13,
+    "documents_analyzed": 13,
+    "category_scores": {
+      "readiness": 6.31,
+      "alignment": 3.35,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.93) across 13 documents showing Portrait of Graduate / strategic planning, educator competencies / instructional frameworks"
+  },
+  {
+    "nces_id": "2510050",
+    "name": "Revere",
+    "state": "MA",
+    "enrollment": 7261,
+    "current_score": 3.26,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.87,
+    "document_count": 18,
+    "documents_analyzed": 18,
+    "category_scores": {
+      "readiness": 4.15,
+      "alignment": 1.8,
+      "activation": 5.42,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.87) across 18 documents showing educator competencies / instructional frameworks, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "5301230",
+    "name": "Cheney School District",
+    "state": "WA",
+    "enrollment": 5662,
+    "current_score": 2.77,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.85,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 6.7,
+      "alignment": 0,
+      "activation": 1.7,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.85) across 11 documents showing Portrait of Graduate / strategic planning, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "0628050",
+    "name": "Oakland Unified",
+    "state": "CA",
+    "enrollment": 33838,
+    "current_score": 2.52,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.65,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 3.85,
+      "alignment": 0,
+      "activation": 4.67,
+      "branding": 0
+    },
+    "rationale": "Large district with strong keyword signals (score 2.65) across 11 documents showing Portrait of Graduate / strategic planning, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "3702430",
+    "name": "Kannapolis City Schools",
+    "state": "NC",
+    "enrollment": 5377,
+    "current_score": 2.82,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.55,
+    "document_count": 5,
+    "documents_analyzed": 5,
+    "category_scores": {
+      "readiness": 6.72,
+      "alignment": 0,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.55) across 5 documents showing Portrait of Graduate / strategic planning, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "0408310",
+    "name": "Tempe School District (4258)",
+    "state": "AZ",
+    "enrollment": 10045,
+    "current_score": 2.79,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 2.5,
+    "document_count": 4,
+    "documents_analyzed": 4,
+    "category_scores": {
+      "readiness": 4.29,
+      "alignment": 3.27,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 1: readiness 4.3 below threshold (>=5 required). Keywords found: [cornerstone, educator_profile, learner_profile, learning_framework, personalized_learning, strategic_plan]. Strong signals present but below stricter new thresholds."
+  },
+  {
+    "nces_id": "1726400",
+    "name": "Moline-Coal Valley CUSD 40",
+    "state": "IL",
+    "enrollment": 7257,
+    "current_score": 2.23,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.3,
+    "document_count": 4,
+    "documents_analyzed": 4,
+    "category_scores": {
+      "readiness": 5.02,
+      "alignment": 1.89,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.30) across 4 documents showing Portrait of Graduate / strategic planning, educator competencies / instructional frameworks"
+  },
+  {
+    "nces_id": "0805400",
+    "name": "Thompson School District R-2J",
+    "state": "CO",
+    "enrollment": 14580,
+    "current_score": 2.1,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 2.25,
+    "document_count": 5,
+    "documents_analyzed": 5,
+    "category_scores": {
+      "readiness": 3.56,
+      "alignment": 0,
+      "activation": 3.43,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 1: readiness 3.6 below threshold (>=5 required). Keywords found: [capstone, cornerstone, digital_citizenship, portrait_of_graduate]. Strong signals present but below stricter new thresholds."
+  },
+  {
+    "nces_id": "5103130",
+    "name": "Prince William County Public Schools",
+    "state": "VA",
+    "enrollment": 90242,
+    "current_score": 2.79,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.23,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 5.46,
+      "alignment": 1.8,
+      "activation": 1.7,
+      "branding": 0
+    },
+    "rationale": "Very large district with strong keyword signals (score 2.23) across 11 documents showing Portrait of Graduate / strategic planning, educator competencies / instructional frameworks, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "5305130",
+    "name": "Monroe School District",
+    "state": "WA",
+    "enrollment": 5874,
+    "current_score": 1.82,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 2.15,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 3.85,
+      "alignment": 0,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 1: readiness 3.9 below threshold (>=5 required). Keywords found: [performance_tasks, portrait_of_graduate, strategic_priorities]. Strong signals present but below stricter new thresholds."
+  },
+  {
+    "nces_id": "2708190",
+    "name": "EASTERN CARVER COUNTY PUBLIC SCHOOL",
+    "state": "MN",
+    "enrollment": 9274,
+    "current_score": 2.65,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.15,
+    "document_count": 7,
+    "documents_analyzed": 7,
+    "category_scores": {
+      "readiness": 5.24,
+      "alignment": 0,
+      "activation": 3.27,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.15) across 7 documents showing Portrait of Graduate / strategic planning, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "2703450",
+    "name": "Austin Public School District",
+    "state": "MN",
+    "enrollment": 5385,
+    "current_score": 2.72,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.05,
+    "document_count": 15,
+    "documents_analyzed": 15,
+    "category_scores": {
+      "readiness": 5.31,
+      "alignment": 0,
+      "activation": 3.43,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.05) across 15 documents showing Portrait of Graduate / strategic planning, performance assessment / evidence of learning"
+  },
+  {
+    "nces_id": "3623220",
+    "name": "PLAINVIEW-OLD BETHPAGE CENTRAL SCHOOL DISTRICT",
+    "state": "NY",
+    "enrollment": 5438,
+    "current_score": 2.21,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.05,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 6.31,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "District with strong keyword signals (score 2.05) across 11 documents showing Portrait of Graduate / strategic planning"
+  },
+  {
+    "nces_id": "2400660",
+    "name": "Washington County Public Schools",
+    "state": "MD",
+    "enrollment": 22772,
+    "current_score": 1.94,
+    "current_tier": 1,
+    "expected_tier": 1,
+    "previous_score": 2.05,
+    "document_count": 4,
+    "documents_analyzed": 4,
+    "category_scores": {
+      "readiness": 5.55,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district with strong keyword signals (score 2.05) across 4 documents showing Portrait of Graduate / strategic planning"
+  },
+  {
+    "nces_id": "4841070",
+    "name": "SPLENDORA ISD",
+    "state": "TX",
+    "enrollment": 5687,
+    "current_score": 1.6,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 2.03,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 3.27,
+      "alignment": 1.8,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 1: readiness 3.3 below threshold (>=5 required). Keywords found: [educator_profile, learner_profile, strategic_priorities]. Strong signals present but below stricter new thresholds."
+  },
+  {
+    "nces_id": "0615180",
+    "name": "Gilroy Unified",
+    "state": "CA",
+    "enrollment": 10181,
+    "current_score": 1.3,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 2,
+    "document_count": 6,
+    "documents_analyzed": 6,
+    "category_scores": {
+      "readiness": 3.71,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 1: readiness 3.7 below threshold (>=5 required). Keywords found: [graduate_profile, habits_of_success]. Strong signals present but below stricter new thresholds."
+  },
+  {
+    "nces_id": "0805370",
+    "name": "St. Vrain Valley School District No. Re1J",
+    "state": "CO",
+    "enrollment": 31607,
+    "current_score": 1.96,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 1.13,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 3.56,
+      "alignment": 2.87,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district with moderate keyword signals (score 1.13) across 11 documents. Some relevant terminology present but not extensively."
+  },
+  {
+    "nces_id": "4816110",
+    "name": "CYPRESS-FAIRBANKS ISD",
+    "state": "TX",
+    "enrollment": 117927,
+    "current_score": 1.63,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 1,
+    "document_count": 24,
+    "documents_analyzed": 24,
+    "category_scores": {
+      "readiness": 4.66,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Very large district with moderate keyword signals (score 1.00) across 24 documents. Some relevant terminology present but not extensively."
+  },
+  {
+    "nces_id": "0407750",
+    "name": "Deer Valley Unified District (4246)",
+    "state": "AZ",
+    "enrollment": 32265,
+    "current_score": 1.25,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 1,
+    "document_count": 5,
+    "documents_analyzed": 5,
+    "category_scores": {
+      "readiness": 3.56,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district with moderate keyword signals (score 1.00) across 5 documents. Some relevant terminology present but not extensively."
+  },
+  {
+    "nces_id": "2400060",
+    "name": "Anne Arundel County Public Schools",
+    "state": "MD",
+    "enrollment": 85029,
+    "current_score": 0.91,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 1,
+    "document_count": 12,
+    "documents_analyzed": 12,
+    "category_scores": {
+      "readiness": 2.59,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Very large district with moderate keyword signals (score 1.00) across 12 documents. Some relevant terminology present but not extensively."
+  },
+  {
+    "nces_id": "0623340",
+    "name": "Madera Unified",
+    "state": "CA",
+    "enrollment": 19935,
+    "current_score": 1.3,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 0.95,
+    "document_count": 8,
+    "documents_analyzed": 8,
+    "category_scores": {
+      "readiness": 3.71,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Mid-size district with moderate keyword signals (score 0.95) across 8 documents. Some relevant terminology present but not extensively."
+  },
+  {
+    "nces_id": "2629940",
+    "name": "Rochester Community School District",
+    "state": "MI",
+    "enrollment": 14868,
+    "current_score": 0.93,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.85,
+    "document_count": 6,
+    "documents_analyzed": 6,
+    "category_scores": {
+      "readiness": 1.31,
+      "alignment": 0,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: new score 0.93 below Tier 2 threshold (>=1.5 total or >=2.5 readiness required). Remaining keywords: [capstone, digital_citizenship]."
+  },
+  {
+    "nces_id": "2503510",
+    "name": "Chelmsford",
+    "state": "MA",
+    "enrollment": 5068,
+    "current_score": 0.6,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.8,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 1.7,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: new score 0.60 below Tier 2 threshold (>=1.5 total or >=2.5 readiness required). Remaining keywords: [strategic_plan]."
+  },
+  {
+    "nces_id": "3800405",
+    "name": "WILLISTON BASIN 7",
+    "state": "ND",
+    "enrollment": 5414,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.8,
+    "document_count": 13,
+    "documents_analyzed": 13,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: co-mention filter removed generic keyword matches (e.g., \"strategic plan\" without nearby PoG/competency context). Zero qualified keywords under new scoring."
+  },
+  {
+    "nces_id": "2400510",
+    "name": "Prince George's County Public Schools",
+    "state": "MD",
+    "enrollment": 132123,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.8,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: co-mention filter removed generic keyword matches (e.g., \"strategic plan\" without nearby PoG/competency context). Zero qualified keywords under new scoring."
+  },
+  {
+    "nces_id": "5310140",
+    "name": "Yelm School District",
+    "state": "WA",
+    "enrollment": 5671,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.8,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: co-mention filter removed generic keyword matches (e.g., \"strategic plan\" without nearby PoG/competency context). Zero qualified keywords under new scoring."
+  },
+  {
+    "nces_id": "4821780",
+    "name": "GREGORY-PORTLAND ISD",
+    "state": "TX",
+    "enrollment": 5024,
+    "current_score": 0.45,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.74,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 1.8,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: new score 0.45 below Tier 2 threshold (>=1.5 total or >=2.5 readiness required). Remaining keywords: [learning_framework]."
+  },
+  {
+    "nces_id": "5304920",
+    "name": "Mead School District",
+    "state": "WA",
+    "enrollment": 10657,
+    "current_score": 0.98,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 0.7,
+    "document_count": 12,
+    "documents_analyzed": 12,
+    "category_scores": {
+      "readiness": 2.79,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Mid-size district with moderate keyword signals (score 0.70) across 12 documents. Some relevant terminology present but not extensively."
+  },
+  {
+    "nces_id": "0802340",
+    "name": "Aurora Joint District No. 28 of the counties of Adams and A",
+    "state": "CO",
+    "enrollment": 38702,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.7,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: co-mention filter removed generic keyword matches (e.g., \"strategic plan\" without nearby PoG/competency context). Zero qualified keywords under new scoring."
+  },
+  {
+    "nces_id": "1201110",
+    "name": "LEON",
+    "state": "FL",
+    "enrollment": 31645,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.64,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: co-mention filter removed generic keyword matches (e.g., \"strategic plan\" without nearby PoG/competency context). Zero qualified keywords under new scoring."
+  },
+  {
+    "nces_id": "4703240",
+    "name": "Oak Ridge",
+    "state": "TN",
+    "enrollment": 5078,
+    "current_score": 0.91,
+    "current_tier": 2,
+    "expected_tier": 2,
+    "previous_score": 0.6,
+    "document_count": 15,
+    "documents_analyzed": 15,
+    "category_scores": {
+      "readiness": 2.59,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "District with moderate keyword signals (score 0.60) across 15 documents. Some relevant terminology present but not extensively."
+  },
+  {
+    "nces_id": "3407350",
+    "name": "Hoboken Public School District",
+    "state": "NJ",
+    "enrollment": 3702,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.4,
+    "document_count": 10,
+    "documents_analyzed": 10,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: co-mention filter removed generic keyword matches (e.g., \"strategic plan\" without nearby PoG/competency context). Zero qualified keywords under new scoring."
+  },
+  {
+    "nces_id": "1200180",
+    "name": "BROWARD",
+    "state": "FL",
+    "enrollment": 243553,
+    "current_score": 0.53,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0.4,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 1.51,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Downgraded from Tier 2: new score 0.53 below Tier 2 threshold (>=1.5 total or >=2.5 readiness required). Remaining keywords: [personalized_learning]."
+  },
+  {
+    "nces_id": "1200390",
+    "name": "MIAMI-DADE",
+    "state": "FL",
+    "enrollment": 333233,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 3,
+    "documents_analyzed": 3,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Very large district (333,233 enrollment) with 3 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "1200870",
+    "name": "HILLSBOROUGH",
+    "state": "FL",
+    "enrollment": 220360,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Very large district (220,360 enrollment) with 11 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "4816230",
+    "name": "DALLAS ISD",
+    "state": "TX",
+    "enrollment": 139802,
+    "current_score": 0.43,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 21,
+    "documents_analyzed": 21,
+    "category_scores": {
+      "readiness": 1.22,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Very large district (139,802 enrollment) with 21 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "1200480",
+    "name": "DUVAL",
+    "state": "FL",
+    "enrollment": 130054,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 21,
+    "documents_analyzed": 21,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Very large district (130,054 enrollment) with 21 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "1301290",
+    "name": "Cobb County",
+    "state": "GA",
+    "enrollment": 105738,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 7,
+    "documents_analyzed": 7,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Very large district (105,738 enrollment) with 7 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "0803360",
+    "name": "School District No. 1 in the county of Denver and State of C",
+    "state": "CO",
+    "enrollment": 90471,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 6,
+    "documents_analyzed": 6,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (90,471 enrollment) with 6 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "1201530",
+    "name": "PASCO",
+    "state": "FL",
+    "enrollment": 86627,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 20,
+    "documents_analyzed": 20,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (86,627 enrollment) with 20 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "4800211",
+    "name": "IDEA PUBLIC SCHOOLS",
+    "state": "TX",
+    "enrollment": 79430,
+    "current_score": 0.43,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 14,
+    "documents_analyzed": 14,
+    "category_scores": {
+      "readiness": 1.22,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (79,430 enrollment) with 14 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "3701920",
+    "name": "Guilford County Schools",
+    "state": "NC",
+    "enrollment": 67620,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 8,
+    "documents_analyzed": 8,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (67,620 enrollment) with 8 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "0612330",
+    "name": "Elk Grove Unified",
+    "state": "CA",
+    "enrollment": 63421,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (63,421 enrollment) with 11 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "4900360",
+    "name": "Granite District",
+    "state": "UT",
+    "enrollment": 59106,
+    "current_score": 0.37,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 20,
+    "documents_analyzed": 20,
+    "category_scores": {
+      "readiness": 1.06,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (59,106 enrollment) with 20 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "4832940",
+    "name": "NORTH EAST ISD",
+    "state": "TX",
+    "enrollment": 56420,
+    "current_score": 0.75,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 24,
+    "documents_analyzed": 24,
+    "category_scores": {
+      "readiness": 2.15,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (56,420 enrollment) with 24 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "4825740",
+    "name": "KLEIN ISD",
+    "state": "TX",
+    "enrollment": 52437,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 16,
+    "documents_analyzed": 16,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (52,437 enrollment) with 16 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "3701500",
+    "name": "Winston Salem / Forsyth County Schools",
+    "state": "NC",
+    "enrollment": 52430,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 9,
+    "documents_analyzed": 9,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (52,430 enrollment) with 9 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "4820340",
+    "name": "GARLAND ISD",
+    "state": "TX",
+    "enrollment": 51021,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 21,
+    "documents_analyzed": 21,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (51,021 enrollment) with 21 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "5101890",
+    "name": "Henrico County Public Schools",
+    "state": "VA",
+    "enrollment": 50915,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 9,
+    "documents_analyzed": 9,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Large district (50,915 enrollment) with 9 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  },
+  {
+    "nces_id": "0102370",
+    "name": "Mobile County",
+    "state": "AL",
+    "enrollment": 49946,
+    "current_score": 0,
+    "current_tier": 3,
+    "expected_tier": 3,
+    "previous_score": 0,
+    "document_count": 11,
+    "documents_analyzed": 11,
+    "category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "rationale": "Sizable district (49,946 enrollment) with 11 documents analyzed but zero keyword matches. Absence of PoG/PtP terminology suggests they have not started portrait-based strategic planning."
+  }
+]

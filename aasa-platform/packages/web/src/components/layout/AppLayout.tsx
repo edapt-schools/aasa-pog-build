@@ -2,9 +2,11 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../ui/button'
 import {
-  Home,
   Search,
+  Users,
   BarChart3,
+  FileText,
+  CalendarDays,
   LogOut,
   Menu,
   X,
@@ -12,9 +14,11 @@ import {
 import { useState, useEffect } from 'react'
 
 const navItems = [
-  { path: '/command', label: 'Home', icon: Home },
-  { path: '/discovery', label: 'Pipeline', icon: Search },
-  { path: '/insights', label: 'Command Center', icon: BarChart3 },
+  { path: '/command', label: 'Search', icon: Search },
+  { path: '/discovery', label: 'Districts', icon: Users },
+  { path: '/grants', label: 'Grants', icon: FileText },
+  { path: '/insights', label: 'Insights', icon: BarChart3 },
+  { path: '/events', label: 'Events', icon: CalendarDays },
 ]
 
 export function AppLayout() {

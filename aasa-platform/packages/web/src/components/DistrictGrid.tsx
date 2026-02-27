@@ -111,6 +111,7 @@ export function DistrictGrid({
             key={district.id}
             district={district}
             onSelect={() => onDistrictClick(district)}
+            tier={district.outreachTier || undefined}
           />
         ))}
       </div>

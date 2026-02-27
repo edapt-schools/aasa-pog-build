@@ -21,6 +21,7 @@ import searchRoutes from './routes/search.js'
 import insightsRoutes from './routes/insights.js'
 import cohortRoutes from './routes/cohorts.js'
 import savedSearchRoutes from './routes/searches.js'
+import eventRoutes from './routes/events.js'
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -37,8 +38,8 @@ app.use(
   })
 )
 
-// JSON body parser
-app.use(express.json())
+// JSON body parser (increased limit for CSV text uploads)
+app.use(express.json({ limit: '5mb' }))
 
 // Cookie-based sessions
 app.use(
@@ -80,6 +81,9 @@ app.use('/api/cohorts', cohortRoutes)
 
 // Saved search routes
 app.use('/api/searches', savedSearchRoutes)
+
+// Event upload routes
+app.use('/api/events', eventRoutes)
 
 // 404 handler
 app.use((_req, res) => {

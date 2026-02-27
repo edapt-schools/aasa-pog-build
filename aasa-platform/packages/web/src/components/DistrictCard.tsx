@@ -1,5 +1,4 @@
 import { Card } from './ui/card'
-import { Badge } from './ui/badge'
 import { MapPin, Users, GraduationCap, Globe, Mail, User } from 'lucide-react'
 import type { District } from '@aasa-platform/shared'
 
@@ -31,18 +30,26 @@ export function DistrictCard({ district, onSelect, tier }: DistrictCardProps) {
             </p>
           </div>
           {tier && (
-            <Badge
-              variant={
+            <span
+              className={`shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
                 tier === 'tier1'
-                  ? 'default'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
                   : tier === 'tier2'
-                    ? 'secondary'
-                    : 'outline'
-              }
-              className="shrink-0 text-[11px]"
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+              }`}
             >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  tier === 'tier1'
+                    ? 'bg-green-500'
+                    : tier === 'tier2'
+                      ? 'bg-amber-500'
+                      : 'bg-gray-400'
+                }`}
+              />
               {tier === 'tier1' ? 'Tier 1' : tier === 'tier2' ? 'Tier 2' : 'Tier 3'}
-            </Badge>
+            </span>
           )}
         </div>
 

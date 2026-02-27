@@ -54,10 +54,10 @@ export function KeywordScoreCard({ scores, showDetails = false }: KeywordScoreCa
     }
   }
 
-  const getScoreBar = (score: string | null, maxScore: number = 100) => {
+  const getScoreBar = (score: string | null, maxScore: number = 10) => {
     if (!score) return 0
     const numScore = parseFloat(score)
-    return (numScore / maxScore) * 100
+    return Math.min((numScore / maxScore) * 100, 100)
   }
 
   return (
@@ -86,7 +86,7 @@ export function KeywordScoreCard({ scores, showDetails = false }: KeywordScoreCa
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-accent transition-all"
-                style={{ width: `${getScoreBar(scores.totalScore, 400)}%` }}
+                style={{ width: `${getScoreBar(scores.totalScore, 40)}%` }}
               />
             </div>
           </div>
@@ -124,13 +124,13 @@ export function KeywordScoreCard({ scores, showDetails = false }: KeywordScoreCa
           <div className="pt-4 border-t border-border">
             <div className="text-xs text-muted-foreground space-y-1">
               <p>
-                <strong>Tier 1:</strong> High priority (Total {'>'} 250)
+                <strong>Tier 1:</strong> High priority (Total {'≥'} 5)
               </p>
               <p>
-                <strong>Tier 2:</strong> Medium priority (Total 100-250)
+                <strong>Tier 2:</strong> Medium priority (Total {'≥'} 2)
               </p>
               <p>
-                <strong>Tier 3:</strong> Lower priority (Total {'<'} 100)
+                <strong>Tier 3:</strong> Lower priority (Total {'<'} 2)
               </p>
             </div>
           </div>

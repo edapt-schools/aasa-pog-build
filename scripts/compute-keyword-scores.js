@@ -23,7 +23,94 @@ const { Client } = require('pg');
 const DATABASE_URL = 'postgresql://postgres:UMK-egr6gan5vdb.nzx@db.wdvpjyymztrebwaiaidu.supabase.co:5432/postgres';
 
 // =============================================================================
+// BUG FIX #1: Co-mention filtering
+// Generic terms only score if they co-occur within 500 chars of a qualifying
+// term. This prevents false positives from generic district content that
+// mentions "strategic plan" or "professional development" without any
+// Portrait-of-Graduate or future-ready context.
+// =============================================================================
+
+const GENERIC_KEYWORDS = new Set([
+  'strategic_plan', 'strategic_priorities', 'strategic_framework',
+  'strategic_roadmap', 'community_commitments', 'community_visioning',
+  'listening_sessions', 'listening_tour', 'mission_vision_refresh',
+  'district_vision_goals', 'learning_labs', 'design_studios',
+  'annual_celebrations', 'community_celebration', 'campaign_plan',
+  'community_storytelling'
+]);
+
+const QUALIFYING_PATTERNS = [
+  /portrait/gi,
+  /graduate/gi,
+  /learner\s+profile/gi,
+  /competency/gi,
+  /\bai\b/gi,
+  /future[- ]?ready/gi,
+  /learner[- ]centered/gi,
+  /student[- ]centered\s+outcomes?/gi
+];
+
+/**
+ * Check if a generic keyword co-occurs within 500 chars of a qualifying term.
+ * Returns true if the match is validated (either not generic, or has a nearby qualifier).
+ */
+function passesCoMentionFilter(text, matchIndex, keywordName) {
+  if (!GENERIC_KEYWORDS.has(keywordName)) return true; // Not generic, always passes
+
+  const windowStart = Math.max(0, matchIndex - 500);
+  const windowEnd = Math.min(text.length, matchIndex + 500);
+  const window = text.substring(windowStart, windowEnd).toLowerCase();
+
+  for (const qp of QUALIFYING_PATTERNS) {
+    // Reset regex state since we reuse them
+    qp.lastIndex = 0;
+    if (qp.test(window)) return true;
+  }
+
+  return false; // Generic term with no nearby qualifier = skip
+}
+
+// =============================================================================
+// BUG FIX #8: Negative dampeners
+// Keywords that signal resistance or opposition to a topic. When these
+// co-occur with a topic keyword, they reduce that category's score by 50%.
+// This prevents districts actively opposing AI or innovation from scoring
+// as if they're embracing it.
+// =============================================================================
+
+const NEGATIVE_DAMPENER_PATTERNS = [
+  /\bban\b/gi,
+  /\bprohibit/gi,
+  /\bmoratorium\b/gi,
+  /\bnot\s+ready\b/gi,
+  /\bdelay\s+implementation\b/gi,
+  /\bconcerns?\s+about\s+ai\b/gi,
+  /\bsuspend\s+use\b/gi,
+  /\brestrict\s+access\b/gi
+];
+
+/**
+ * Check if negative dampener keywords co-occur near a match position.
+ * Returns a multiplier: 0.5 if dampener found, 1.0 otherwise.
+ */
+function getDampenerMultiplier(text, matchIndex) {
+  const windowStart = Math.max(0, matchIndex - 300);
+  const windowEnd = Math.min(text.length, matchIndex + 300);
+  const window = text.substring(windowStart, windowEnd);
+
+  for (const dp of NEGATIVE_DAMPENER_PATTERNS) {
+    dp.lastIndex = 0;
+    if (dp.test(window)) return 0.5;
+  }
+
+  return 1.0;
+}
+
+// =============================================================================
 // KEYWORD TAXONOMY (from planning-docs/Keyword Taxonomy and Synonyms.pdf)
+//
+// BUG FIX #6: Expanded branding keywords with additional Portrait/PoG terms
+// BUG FIX #7: Added missing taxonomy keywords for AI readiness, tech governance, etc.
 // =============================================================================
 
 const TAXONOMY = {
@@ -40,6 +127,18 @@ const TAXONOMY = {
       { pattern: /student\s+success\s+vision/gi, weight: 0.8, name: 'student_success_vision' },
       { pattern: /future[- ]?ready\s+skills/gi, weight: 0.7, name: 'future_ready_skills' },
       { pattern: /habits\s+of\s+success/gi, weight: 0.7, name: 'habits_of_success' },
+      // FIX #6: Additional Portrait/PoG variant terms
+      { pattern: /portrait\s+of\s+(a\s+)?learner/gi, weight: 1.0, name: 'portrait_of_learner', exact: true },
+      { pattern: /future[- ]?ready\s+graduate/gi, weight: 0.9, name: 'future_ready_graduate', exact: true },
+      { pattern: /learner[- ]centered/gi, weight: 0.7, name: 'learner_centered' },
+      { pattern: /student[- ]centered\s+outcomes?/gi, weight: 0.7, name: 'student_centered_outcomes' },
+      { pattern: /competency[- ]based/gi, weight: 0.7, name: 'competency_based' },
+      // FIX #7: AI readiness and technology governance keywords
+      { pattern: /\bai\s+readiness\b/gi, weight: 0.8, name: 'ai_readiness' },
+      { pattern: /technology\s+governance/gi, weight: 0.7, name: 'technology_governance' },
+      { pattern: /data\s+privacy\s+framework/gi, weight: 0.7, name: 'data_privacy_framework' },
+      { pattern: /digital\s+citizenship/gi, weight: 0.6, name: 'digital_citizenship' },
+      { pattern: /personalized\s+learning/gi, weight: 0.7, name: 'personalized_learning' },
 
       // A2: Community Compass - Weight 0.9
       { pattern: /community\s+compass/gi, weight: 0.9, name: 'community_compass', exact: true },
@@ -148,32 +247,129 @@ const TAXONOMY = {
 };
 
 // =============================================================================
-// MULTIPLIERS
+// BUG FIX #3: Recency multiplier with URL date extraction
+// Extract actual dates from URLs (e.g., /2024/, /2023-04/) and document content,
+// not just crawl timestamps. Apply proper decay curve: recent docs matter most,
+// old docs fade. No-date docs get crawl_date with 0.7 cap to avoid inflating
+// stale content that just happened to be crawled recently.
 // =============================================================================
 
-// Recency multiplier based on document date or crawl time
-function getRecencyMultiplier(crawledAt) {
-  if (!crawledAt) return 0.8; // Unknown = assume moderately old
+/**
+ * Attempt to extract a publication date from the URL.
+ * Common patterns: /2024/, /2023-04/, /2024-01-15/, /2024_report, etc.
+ */
+function extractDateFromUrl(url) {
+  if (!url) return null;
 
-  const now = new Date();
-  const crawlDate = new Date(crawledAt);
-  const monthsAgo = (now - crawlDate) / (1000 * 60 * 60 * 24 * 30);
+  // Match /YYYY-MM-DD/ or /YYYY-MM/ or /YYYY/
+  const fullDate = url.match(/\/(\d{4})-(\d{2})(?:-(\d{2}))?(?:\/|$|\?)/);
+  if (fullDate) {
+    const year = parseInt(fullDate[1]);
+    const month = parseInt(fullDate[2]) - 1;
+    const day = fullDate[3] ? parseInt(fullDate[3]) : 1;
+    if (year >= 2015 && year <= 2030) return new Date(year, month, day);
+  }
 
-  // Since we just crawled, use high recency
-  // In production, would use document publish date if available
-  if (monthsAgo <= 6) return 1.0;
-  if (monthsAgo <= 12) return 0.8;
-  return 0.6;
+  // Match /YYYY/ standalone in path
+  const yearOnly = url.match(/\/(\d{4})\//);
+  if (yearOnly) {
+    const year = parseInt(yearOnly[1]);
+    if (year >= 2015 && year <= 2030) return new Date(year, 6, 1); // Mid-year estimate
+  }
+
+  return null;
 }
 
-// Specificity multiplier based on URL patterns
+/**
+ * Attempt to extract a publication date from document text.
+ * Looks for common date patterns near the beginning of the document.
+ */
+function extractDateFromContent(text) {
+  if (!text) return null;
+
+  // Only search first 2000 chars (dates are usually near the top)
+  const header = text.substring(0, 2000);
+
+  // "Published: January 2024", "Updated: March 15, 2023", etc.
+  const publishedMatch = header.match(/(?:published|updated|date|posted|revised)\s*:?\s*(\w+\s+\d{1,2},?\s+\d{4})/i);
+  if (publishedMatch) {
+    const d = new Date(publishedMatch[1]);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // "January 2024", "March 2023" near top of doc
+  const monthYear = header.match(/(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i);
+  if (monthYear) {
+    const d = new Date(monthYear[0]);
+    if (!isNaN(d.getTime()) && d.getFullYear() >= 2015) return d;
+  }
+
+  return null;
+}
+
+function getRecencyMultiplier(crawledAt, url, text) {
+  const now = new Date();
+
+  // Try to extract actual publication date (URL first, then content)
+  const urlDate = extractDateFromUrl(url);
+  const contentDate = extractDateFromContent(text);
+  const publishDate = urlDate || contentDate;
+
+  let docDate;
+  let usedCrawlDate = false;
+
+  if (publishDate) {
+    docDate = publishDate;
+  } else if (crawledAt) {
+    // FIX #3: No-date docs use crawl_date but cap multiplier at 0.7
+    // because "recently crawled" != "recently published"
+    docDate = new Date(crawledAt);
+    usedCrawlDate = true;
+  } else {
+    return 0.5; // No date at all = assume old
+  }
+
+  const monthsAgo = (now - docDate) / (1000 * 60 * 60 * 24 * 30);
+
+  let multiplier;
+  if (monthsAgo <= 6) multiplier = 1.0;
+  else if (monthsAgo <= 12) multiplier = 0.8;
+  else if (monthsAgo <= 24) multiplier = 0.5;
+  else if (monthsAgo <= 36) multiplier = 0.3;
+  else multiplier = 0.1;
+
+  // Cap at 0.7 if we're using crawl date as a proxy
+  if (usedCrawlDate && multiplier > 0.7) {
+    multiplier = 0.7;
+  }
+
+  return multiplier;
+}
+
+// =============================================================================
+// BUG FIX #9: URL categorization
+// Tightened URL matching to prevent false positives. "/plan" was matching
+// "/floor-plan", "/meal-plan", "/emergency-plan" etc. Now uses specific
+// substrings like "/strategic-plan", "/portrait-of", "/graduate-profile".
+// =============================================================================
+
 function getSpecificityMultiplier(url, documentCategory) {
   const urlLower = (url || '').toLowerCase();
 
   // District-authored implementation content (highest value)
-  if (urlLower.includes('/plan') || urlLower.includes('/strategic') ||
-      urlLower.includes('/framework') || urlLower.includes('/portrait') ||
-      urlLower.includes('/vision') || urlLower.includes('/graduate')) {
+  // FIX #9: Specific URL patterns instead of loose "/plan" matching
+  if (urlLower.includes('/strategic-plan') ||
+      urlLower.includes('/strategic_plan') ||
+      urlLower.includes('/portrait-of') ||
+      urlLower.includes('/portrait_of') ||
+      urlLower.includes('/graduate-profile') ||
+      urlLower.includes('/graduate_profile') ||
+      urlLower.includes('/learner-profile') ||
+      urlLower.includes('/learner_profile') ||
+      urlLower.includes('/framework-for-learning') ||
+      urlLower.includes('/vision-and-goals') ||
+      urlLower.includes('/competency') ||
+      urlLower.includes('/future-ready')) {
     return 1.0;
   }
 
@@ -204,19 +400,32 @@ function analyzeText(text, crawledAt, url, documentCategory) {
   };
 
   const textLower = (text || '').toLowerCase();
-  const recencyMult = getRecencyMultiplier(crawledAt);
+  // FIX #3: Pass url and text to recency multiplier for date extraction
+  const recencyMult = getRecencyMultiplier(crawledAt, url, text);
   const specificityMult = getSpecificityMultiplier(url, documentCategory);
 
   // Check each category
   for (const [category, data] of Object.entries(TAXONOMY)) {
     for (const keyword of data.keywords) {
-      const regex = keyword.pattern;
+      // Use a fresh regex each time to avoid lastIndex state issues
+      const regex = new RegExp(keyword.pattern.source, keyword.pattern.flags);
       const matchResults = textLower.match(regex);
 
       if (matchResults) {
+        // Find the position of the first match for co-mention and dampener checks
+        const matchIndex = textLower.indexOf(matchResults[0].toLowerCase());
+
+        // FIX #1: Co-mention filter for generic terms
+        if (!passesCoMentionFilter(textLower, matchIndex, keyword.name)) {
+          continue; // Generic term without qualifying context, skip
+        }
+
+        // FIX #8: Check for negative dampeners near this match
+        const dampenerMult = getDampenerMultiplier(textLower, matchIndex);
+
         // Calculate weighted score with multipliers
         const baseWeight = keyword.weight;
-        const adjustedWeight = baseWeight * recencyMult * specificityMult;
+        const adjustedWeight = baseWeight * recencyMult * specificityMult * dampenerMult;
 
         matches[category].push({
           keyword: keyword.name,
@@ -224,6 +433,7 @@ function analyzeText(text, crawledAt, url, documentCategory) {
           adjustedWeight: adjustedWeight,
           count: matchResults.length,
           exact: keyword.exact || false,
+          dampened: dampenerMult < 1.0, // Track if dampener was applied
           context: extractContext(text, matchResults[0])
         });
       }
@@ -250,20 +460,30 @@ function extractContext(text, match) {
   return context;
 }
 
-// Calculate category score from matches
+// =============================================================================
+// BUG FIX #2: Highest-weight dedup (not first-match-wins)
+// BUG FIX #4: Diminishing returns scaling instead of linear x2 cap
+// =============================================================================
+
 function calculateCategoryScore(matches) {
   if (matches.length === 0) return 0;
 
-  // Sum all adjusted weights, but cap per-keyword contribution
-  let score = 0;
-  const seenKeywords = new Set();
+  // FIX #2: Keep the HIGHEST weight match per keyword, not the first one.
+  // When the same keyword appears in multiple documents with different
+  // recency/specificity multipliers, we want the best signal, not an
+  // arbitrary first occurrence.
+  const bestByKeyword = new Map();
 
   for (const match of matches) {
-    // Only count each keyword once (dedupe)
-    if (seenKeywords.has(match.keyword)) continue;
-    seenKeywords.add(match.keyword);
+    const existing = bestByKeyword.get(match.keyword);
+    if (!existing || match.adjustedWeight > existing.adjustedWeight) {
+      bestByKeyword.set(match.keyword, match);
+    }
+  }
 
-    // Add adjusted weight
+  // Sum the best adjusted weights
+  let score = 0;
+  for (const match of bestByKeyword.values()) {
     score += match.adjustedWeight;
 
     // Bonus for exact branded terms
@@ -272,22 +492,50 @@ function calculateCategoryScore(matches) {
     }
   }
 
-  // Scale to 0-10
-  return Math.min(10, score * 2);
+  // FIX #4: Diminishing returns scaling instead of Math.min(10, sum * 2)
+  // Formula: 10 * (1 - e^(-sum/3))
+  // - First matches contribute the most signal
+  // - Additional matches have diminishing marginal value
+  // - Score asymptotically approaches 10 but never exceeds it
+  // - At sum=3 (~2 strong keywords): score ~6.3
+  // - At sum=6 (~4 strong keywords): score ~8.6
+  // - At sum=9 (~6 strong keywords): score ~9.5
+  return 10 * (1 - Math.exp(-score / 3));
+}
+
+// =============================================================================
+// BUG FIX #5: Weighted average (replaces equal 1/4 weights)
+// Readiness is the strongest buy signal (0.35), Alignment and Activation
+// are equal secondary signals (0.25 each), Branding is supporting (0.15).
+// =============================================================================
+
+function calculateTotalScore(categoryScores) {
+  return (
+    categoryScores.readiness  * 0.35 +
+    categoryScores.alignment  * 0.25 +
+    categoryScores.activation * 0.25 +
+    categoryScores.branding   * 0.15
+  );
 }
 
 // Determine outreach tier based on total score
+// Updated thresholds to reflect new scoring distribution:
+// - Diminishing returns scoring produces smoother 0-10 scale
+// - Weighted average means total score is also 0-10
+// - Tier 1: totalScore >= 4 (strong multi-category signal or very strong readiness)
+// - Tier 2: totalScore >= 1.5 (moderate signal in at least one area)
+// - Tier 3: below 1.5
 function determineOutreachTier(totalScore, categoryScores) {
-  // Tier 1: Strong signals - high total OR specific high-value keywords
-  if (totalScore >= 5 ||
-      categoryScores.readiness >= 3 ||
-      categoryScores.activation >= 2) {
+  // Tier 1: Strong signals - high total OR specific high-value category scores
+  if (totalScore >= 4 ||
+      categoryScores.readiness >= 5 ||
+      categoryScores.activation >= 4) {
     return 'tier1';
   }
 
   // Tier 2: Moderate signals
-  if (totalScore >= 2 ||
-      categoryScores.readiness >= 1.5) {
+  if (totalScore >= 1.5 ||
+      categoryScores.readiness >= 2.5) {
     return 'tier2';
   }
 
@@ -395,12 +643,8 @@ async function main() {
       branding: calculateCategoryScore(allMatches.branding)
     };
 
-    const totalScore = (
-      categoryScores.readiness +
-      categoryScores.alignment +
-      categoryScores.activation +
-      categoryScores.branding
-    ) / 4;
+    // FIX #5: Weighted average instead of equal 1/4
+    const totalScore = calculateTotalScore(categoryScores);
 
     const outreachTier = determineOutreachTier(totalScore, categoryScores);
 
@@ -412,7 +656,8 @@ async function main() {
           keyword: m.keyword,
           weight: m.adjustedWeight,
           source_doc: m.source_doc,
-          context: m.context
+          context: m.context,
+          ...(m.dampened ? { dampened: true } : {})
         }));
       }
     }
