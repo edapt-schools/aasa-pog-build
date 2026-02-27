@@ -124,13 +124,13 @@ export function KeywordScoreCard({ scores, showDetails = false }: KeywordScoreCa
           <div className="pt-4 border-t border-border">
             <div className="text-xs text-muted-foreground space-y-1">
               <p>
-                <strong>Tier 1:</strong> High priority (Total {'≥'} 5)
+                <strong>Tier 1:</strong> Portrait-to-Practice leads (Total {'≥'} 4 or high readiness)
               </p>
               <p>
-                <strong>Tier 2:</strong> Medium priority (Total {'≥'} 2)
+                <strong>Tier 2:</strong> Emerging signals (Total {'≥'} 1.5)
               </p>
               <p>
-                <strong>Tier 3:</strong> Lower priority (Total {'<'} 2)
+                <strong>Tier 3:</strong> Portrait-of-a-Graduate prospects (Total {'<'} 1.5)
               </p>
             </div>
           </div>
