@@ -3,7 +3,7 @@
  * Centralized fetch wrapper with auth credentials and type safety
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from './supabase'
 import type {
   CommandRequest,
   CommandResponse,
@@ -27,13 +27,10 @@ import type {
   CohortDetailResponse,
   SavedSearchRecord,
   ListSavedSearchesResponse,
+  EventUploadResponse,
+  EventUploadDetailResponse,
+  ListEventUploadsResponse,
 } from '@aasa-platform/shared'
-
-// Initialize Supabase client for getting auth token
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-)
 
 /**
  * Custom error class for API errors
@@ -337,6 +334,39 @@ export class ApiClient {
 
   async deleteSavedSearch(searchId: string): Promise<void> {
     await apiFetch<{ success: boolean }>(`/searches/${searchId}`, { method: 'DELETE' })
+  }
+
+  // =========================================================================
+  // Event Upload API Methods
+  // =========================================================================
+
+  async uploadEventList(fileName: string, csvText: string): Promise<EventUploadResponse> {
+    return apiFetch<EventUploadResponse>('/events/upload', {
+      method: 'POST',
+      body: JSON.stringify({ fileName, csvText }),
+    })
+  }
+
+  async listEventUploads(): Promise<ListEventUploadsResponse> {
+    return apiFetch<ListEventUploadsResponse>('/events')
+  }
+
+  async getEventUploadDetail(uploadId: string): Promise<EventUploadDetailResponse> {
+    return apiFetch<EventUploadDetailResponse>(`/events/${uploadId}`)
+  }
+
+  async exportEventUpload(uploadId: string): Promise<Blob> {
+    const url = `${API_BASE_URL}/api/events/${uploadId}/export`
+    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    const response = await fetch(url, {
+      credentials: 'include',
+      headers: {
+        ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+      },
+    })
+    if (!response.ok) throw new ApiClientError('Export failed', response.status)
+    return response.blob()
   }
 }
 

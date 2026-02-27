@@ -71,6 +71,9 @@ router.get('/', async (req: Request, res: Response) => {
         ? Number(req.query.brandingScoreMin)
         : undefined,
       search: req.query.search as string | undefined,
+      sort: (req.query.sort === 'warm_leads' || req.query.sort === 'new_prospects')
+        ? req.query.sort
+        : undefined,
     }
 
     const result = await districtService.listDistricts(params)

@@ -27,6 +27,7 @@ export interface District {
   lastScrapedAt: string | null
   scrapeStatus: string | null
   scrapeError: string | null
+  outreachTier?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -45,6 +46,8 @@ export interface DistrictDocument {
   discoveredAt: string | null
   lastCrawledAt: string | null
   contentHash: string | null
+  lastCrawlStatus?: string | null
+  lastCrawlHttpStatus?: number | null
 }
 
 export interface DistrictKeywordScores {
@@ -91,6 +94,9 @@ export interface ListDistrictsParams {
 
   // Search
   search?: string // Name search
+
+  // Sort
+  sort?: 'warm_leads' | 'new_prospects' // warm_leads=desc by score, new_prospects=asc excluding zero-doc districts
 }
 
 export interface ListDistrictsResponse {
@@ -483,4 +489,62 @@ export interface CreateSavedSearchRequest {
 
 export interface ListSavedSearchesResponse {
   searches: SavedSearchRecord[]
+}
+
+// =============================================================================
+// Event Upload Types
+// =============================================================================
+
+export interface EventUpload {
+  id: string
+  userId: string
+  fileName: string
+  uploadedAt: string
+  rowCount: number
+  matchedCount: number
+  status: 'processing' | 'completed' | 'failed'
+}
+
+export interface EventUploadResultRow {
+  id: string
+  rowIndex: number
+  inputName: string
+  inputState: string | null
+  matchedDistrictId: string | null
+  matchConfidence: string | null
+  districtScore: string | null
+  districtTier: string | null
+  district: {
+    name: string
+    state: string
+    city: string | null
+    enrollment: number | null
+    superintendentName: string | null
+    superintendentEmail: string | null
+    websiteDomain: string | null
+  } | null
+  scores: {
+    readiness: string | null
+    alignment: string | null
+    activation: string | null
+    branding: string | null
+    total: string | null
+    tier: string | null
+  } | null
+}
+
+export interface EventUploadResponse {
+  uploadId: string
+  rowCount: number
+  matchedCount: number
+  status: string
+}
+
+export interface EventUploadDetailResponse {
+  upload: EventUpload
+  results: EventUploadResultRow[]
+}
+
+export interface ListEventUploadsResponse {
+  uploads: EventUpload[]
 }

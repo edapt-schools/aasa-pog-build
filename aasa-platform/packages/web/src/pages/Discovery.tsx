@@ -6,9 +6,11 @@ import { DistrictGrid } from '../components/DistrictGrid'
 import { PaginationControls } from '../components/PaginationControls'
 import { DistrictDetailPanel } from '../components/DistrictDetailPanel'
 import { ExportButton } from '../components/ExportButton'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, TrendingDown, TrendingUp } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import type { ListDistrictsParams, District } from '@aasa-platform/shared'
+
+type SortMode = 'warm_leads' | 'new_prospects'
 
 export default function Discovery() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -19,11 +21,17 @@ export default function Discovery() {
   // Selected district for detail panel
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null)
 
+  // Sort mode state
+  const [sortMode, setSortMode] = useState<SortMode>(
+    (searchParams.get('sort') as SortMode) || 'warm_leads'
+  )
+
   // Initialize filters from URL query params
   const initializeFilters = useCallback((): ListDistrictsParams => {
     const filters: ListDistrictsParams = {
       limit: parseInt(searchParams.get('limit') || '50'),
       offset: parseInt(searchParams.get('offset') || '0'),
+      sort: (searchParams.get('sort') as SortMode) || 'warm_leads',
     }
 
     // Search
@@ -111,6 +119,9 @@ export default function Discovery() {
     // Locale types (multi-select)
     filters.localeType?.forEach((locale) => params.append('localeType', locale))
 
+    // Sort
+    if (filters.sort) params.set('sort', filters.sort)
+
     setSearchParams(params, { replace: true })
   }, [filters, setSearchParams])
 
@@ -123,9 +134,15 @@ export default function Discovery() {
     setIsFilterDrawerOpen(false)
   }
 
+  // Handle sort mode change
+  const handleSortChange = (mode: SortMode) => {
+    setSortMode(mode)
+    setFilters({ ...filters, sort: mode, offset: 0 })
+  }
+
   // Handle filter reset
   const handleFilterReset = () => {
-    setFilters({ limit: 50, offset: 0 })
+    setFilters({ limit: 50, offset: 0, sort: sortMode })
     setIsFilterDrawerOpen(false)
   }
 
@@ -192,7 +209,7 @@ export default function Discovery() {
               {isFilterDrawerOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
             <div>
-              <h1 className="text-lg font-semibold text-foreground leading-tight">Pipeline</h1>
+              <h1 className="text-lg font-semibold text-foreground leading-tight">Districts</h1>
               <p className="text-xs text-muted-foreground hidden sm:block mt-0.5">
                 {data ? `${data.pagination.total.toLocaleString()} districts` : 'Loading...'}
               </p>
@@ -250,6 +267,36 @@ export default function Discovery() {
             >
               {loading && 'Loading districts...'}
               {!loading && data && `Showing ${data.pagination.total} districts`}
+            </div>
+
+            {/* Sort toggle */}
+            <div className="flex items-center gap-1 mb-4 bg-muted/50 rounded-lg p-1 w-fit">
+              <button
+                type="button"
+                onClick={() => handleSortChange('warm_leads')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-[var(--motion-fast)] ${
+                  sortMode === 'warm_leads'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Districts actively discussing Portrait-to-Practice"
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                Warm Leads
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSortChange('new_prospects')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-[var(--motion-fast)] ${
+                  sortMode === 'new_prospects'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Districts not yet talking about Portrait of a Graduate"
+              >
+                <TrendingDown className="w-3.5 h-3.5" />
+                New Prospects
+              </button>
             </div>
 
             {/* District grid */}

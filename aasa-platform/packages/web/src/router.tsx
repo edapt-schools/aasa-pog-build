@@ -7,6 +7,7 @@ import Discovery from './pages/Discovery'
 import Grants from './pages/Grants'
 import Insights from './pages/Insights'
 import CommandCenter from './pages/CommandCenter'
+import Events from './pages/Events'
 
 /**
  * Protected Route Component
@@ -72,19 +73,33 @@ export const router = createBrowserRouter([
         path: '/insights',
         element: <Insights />,
       },
+      {
+        path: '/events',
+        element: <Events />,
+      },
     ],
   },
   {
     path: '*',
     element: (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
+        <div className="text-center max-w-md">
+          <img
+            src="/aasa-favicon.png"
+            alt="AASA logo"
+            className="w-12 h-12 mx-auto mb-6 object-contain"
+          />
           <h1 className="text-heading-1 font-semibold text-foreground mb-2">
             404
           </h1>
-          <p className="text-muted-foreground mb-4">Page not found</p>
-          <a href="/" className="text-accent underline">
-            Go home
+          <p className="text-body text-muted-foreground mb-8">
+            The page you are looking for does not exist or has been moved.
+          </p>
+          <a
+            href="/command"
+            className="inline-flex items-center justify-center px-6 py-3 bg-accent text-accent-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
+          >
+            Return to Search
           </a>
         </div>
       </div>

@@ -1,0 +1,1239 @@
+[
+  {
+    "nces_id": "4022770",
+    "name": "OKLAHOMA CITY",
+    "state": "OK",
+    "enrollment": 32750,
+    "expected_tier": 1,
+    "old_score": 3.18,
+    "old_tier": 1,
+    "new_score": 2.7534,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 5.23,
+      "alignment": 1.8,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "docs_fetched": 21,
+    "keywords_found": [
+      "cornerstone",
+      "graduate_profile",
+      "instructional_framework",
+      "listening_sessions",
+      "profile_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": -0.4266
+  },
+  {
+    "nces_id": "3904504",
+    "name": "Westerville City",
+    "state": "OH",
+    "enrollment": 14589,
+    "expected_tier": 1,
+    "old_score": 3.03,
+    "old_tier": 1,
+    "new_score": 2.5139,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 4.9,
+      "alignment": 0,
+      "activation": 3.2,
+      "branding": 0
+    },
+    "docs_fetched": 5,
+    "keywords_found": [
+      "application_of_learning",
+      "cornerstone",
+      "graduate_competencies",
+      "portrait_of_graduate",
+      "strategic_framework"
+    ],
+    "tier_match": false,
+    "score_delta": -0.5161
+  },
+  {
+    "nces_id": "1716830",
+    "name": "Glenbard Twp HSD 87",
+    "state": "IL",
+    "enrollment": 7810,
+    "expected_tier": 1,
+    "old_score": 2.93,
+    "old_tier": 1,
+    "new_score": 3.0462,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 6.31,
+      "alignment": 3.35,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 13,
+    "keywords_found": [
+      "educator_competencies",
+      "educator_profile",
+      "graduate_competencies",
+      "graduate_profile",
+      "profile_of_graduate",
+      "strategic_plan"
+    ],
+    "tier_match": true,
+    "score_delta": 0.1162
+  },
+  {
+    "nces_id": "2510050",
+    "name": "Revere",
+    "state": "MA",
+    "enrollment": 7261,
+    "expected_tier": 1,
+    "old_score": 2.87,
+    "old_tier": 1,
+    "new_score": 3.2592,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 4.15,
+      "alignment": 1.8,
+      "activation": 5.42,
+      "branding": 0
+    },
+    "docs_fetched": 18,
+    "keywords_found": [
+      "competency_based",
+      "cornerstone",
+      "evidence_of_learning",
+      "graduate_competencies",
+      "instructional_framework",
+      "performance_tasks",
+      "personalized_learning",
+      "student_showcase"
+    ],
+    "tier_match": true,
+    "score_delta": 0.3892
+  },
+  {
+    "nces_id": "5301230",
+    "name": "Cheney School District",
+    "state": "WA",
+    "enrollment": 5662,
+    "expected_tier": 1,
+    "old_score": 2.85,
+    "old_tier": 1,
+    "new_score": 2.7722,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 6.7,
+      "alignment": 0,
+      "activation": 1.7,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "graduate_competencies",
+      "graduate_outcomes_evidence",
+      "portrait_of_graduate",
+      "portrait_of_learner",
+      "profile_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": -0.0778
+  },
+  {
+    "nces_id": "0628050",
+    "name": "Oakland Unified",
+    "state": "CA",
+    "enrollment": 33838,
+    "expected_tier": 1,
+    "old_score": 2.65,
+    "old_tier": 1,
+    "new_score": 2.5172,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 3.85,
+      "alignment": 0,
+      "activation": 4.67,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "capstone",
+      "cornerstone",
+      "graduate_profile",
+      "performance_tasks",
+      "strategic_plan"
+    ],
+    "tier_match": true,
+    "score_delta": -0.1328
+  },
+  {
+    "nces_id": "3702430",
+    "name": "Kannapolis City Schools",
+    "state": "NC",
+    "enrollment": 5377,
+    "expected_tier": 1,
+    "old_score": 2.55,
+    "old_tier": 1,
+    "new_score": 2.8239,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 6.72,
+      "alignment": 0,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "docs_fetched": 5,
+    "keywords_found": [
+      "future_ready_graduate",
+      "future_ready_skills",
+      "learner_profile",
+      "performance_tasks",
+      "personalized_learning",
+      "portrait_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": 0.2739
+  },
+  {
+    "nces_id": "0408310",
+    "name": "Tempe School District (4258)",
+    "state": "AZ",
+    "enrollment": 10045,
+    "expected_tier": 1,
+    "old_score": 2.5,
+    "old_tier": 1,
+    "new_score": 2.7929,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 4.29,
+      "alignment": 3.27,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "docs_fetched": 4,
+    "keywords_found": [
+      "cornerstone",
+      "educator_profile",
+      "learner_profile",
+      "learning_framework",
+      "personalized_learning",
+      "strategic_plan"
+    ],
+    "tier_match": false,
+    "score_delta": 0.2929
+  },
+  {
+    "nces_id": "1726400",
+    "name": "Moline-Coal Valley CUSD 40",
+    "state": "IL",
+    "enrollment": 7257,
+    "expected_tier": 1,
+    "old_score": 2.3,
+    "old_tier": 1,
+    "new_score": 2.2297,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 5.02,
+      "alignment": 1.89,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 4,
+    "keywords_found": [
+      "educator_competencies",
+      "graduate_competencies",
+      "portrait_of_graduate",
+      "strategic_plan"
+    ],
+    "tier_match": true,
+    "score_delta": -0.0703
+  },
+  {
+    "nces_id": "0805400",
+    "name": "Thompson School District R-2J",
+    "state": "CO",
+    "enrollment": 14580,
+    "expected_tier": 1,
+    "old_score": 2.25,
+    "old_tier": 1,
+    "new_score": 2.1033,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 3.56,
+      "alignment": 0,
+      "activation": 3.43,
+      "branding": 0
+    },
+    "docs_fetched": 5,
+    "keywords_found": [
+      "capstone",
+      "cornerstone",
+      "digital_citizenship",
+      "portrait_of_graduate"
+    ],
+    "tier_match": false,
+    "score_delta": -0.1467
+  },
+  {
+    "nces_id": "5103130",
+    "name": "Prince William County Public Schools",
+    "state": "VA",
+    "enrollment": 90242,
+    "expected_tier": 1,
+    "old_score": 2.23,
+    "old_tier": 1,
+    "new_score": 2.787,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 5.46,
+      "alignment": 1.8,
+      "activation": 1.7,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "competency_based",
+      "learner_centered",
+      "learning_framework",
+      "personalized_learning",
+      "profile_of_graduate",
+      "student_showcase"
+    ],
+    "tier_match": true,
+    "score_delta": 0.557
+  },
+  {
+    "nces_id": "5305130",
+    "name": "Monroe School District",
+    "state": "WA",
+    "enrollment": 5874,
+    "expected_tier": 1,
+    "old_score": 2.15,
+    "old_tier": 1,
+    "new_score": 1.8222,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 3.85,
+      "alignment": 0,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "performance_tasks",
+      "portrait_of_graduate",
+      "strategic_priorities"
+    ],
+    "tier_match": false,
+    "score_delta": -0.3278
+  },
+  {
+    "nces_id": "2708190",
+    "name": "EASTERN CARVER COUNTY PUBLIC SCHOOL",
+    "state": "MN",
+    "enrollment": 9274,
+    "expected_tier": 1,
+    "old_score": 2.15,
+    "old_tier": 1,
+    "new_score": 2.6543,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 5.24,
+      "alignment": 0,
+      "activation": 3.27,
+      "branding": 0
+    },
+    "docs_fetched": 7,
+    "keywords_found": [
+      "beyond_test_scores",
+      "cornerstone",
+      "digital_citizenship",
+      "listening_sessions",
+      "personalized_learning",
+      "portrait_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": 0.5043
+  },
+  {
+    "nces_id": "2703450",
+    "name": "Austin Public School District",
+    "state": "MN",
+    "enrollment": 5385,
+    "expected_tier": 1,
+    "old_score": 2.05,
+    "old_tier": 1,
+    "new_score": 2.7151,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 5.31,
+      "alignment": 0,
+      "activation": 3.43,
+      "branding": 0
+    },
+    "docs_fetched": 15,
+    "keywords_found": [
+      "capstone",
+      "cornerstone",
+      "digital_citizenship",
+      "personalized_learning",
+      "strategic_plan",
+      "strategic_priorities"
+    ],
+    "tier_match": true,
+    "score_delta": 0.6651
+  },
+  {
+    "nces_id": "3623220",
+    "name": "PLAINVIEW-OLD BETHPAGE CENTRAL SCHOOL DISTRICT",
+    "state": "NY",
+    "enrollment": 5438,
+    "expected_tier": 1,
+    "old_score": 2.05,
+    "old_tier": 1,
+    "new_score": 2.2081,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 6.31,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "graduate_competencies",
+      "graduate_profile",
+      "profile_of_graduate",
+      "strategic_plan"
+    ],
+    "tier_match": true,
+    "score_delta": 0.1581
+  },
+  {
+    "nces_id": "2400660",
+    "name": "Washington County Public Schools",
+    "state": "MD",
+    "enrollment": 22772,
+    "expected_tier": 1,
+    "old_score": 2.05,
+    "old_tier": 1,
+    "new_score": 1.943,
+    "new_tier": 1,
+    "new_category_scores": {
+      "readiness": 5.55,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 4,
+    "keywords_found": [
+      "graduate_competencies",
+      "portrait_of_graduate",
+      "profile_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": -0.107
+  },
+  {
+    "nces_id": "4841070",
+    "name": "SPLENDORA ISD",
+    "state": "TX",
+    "enrollment": 5687,
+    "expected_tier": 1,
+    "old_score": 2.03,
+    "old_tier": 1,
+    "new_score": 1.5958,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 3.27,
+      "alignment": 1.8,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "educator_profile",
+      "learner_profile",
+      "strategic_priorities"
+    ],
+    "tier_match": false,
+    "score_delta": -0.4342
+  },
+  {
+    "nces_id": "0615180",
+    "name": "Gilroy Unified",
+    "state": "CA",
+    "enrollment": 10181,
+    "expected_tier": 1,
+    "old_score": 2,
+    "old_tier": 1,
+    "new_score": 1.2979,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 3.71,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 6,
+    "keywords_found": [
+      "graduate_profile",
+      "habits_of_success"
+    ],
+    "tier_match": false,
+    "score_delta": -0.7021
+  },
+  {
+    "nces_id": "0805370",
+    "name": "St. Vrain Valley School District No. Re1J",
+    "state": "CO",
+    "enrollment": 31607,
+    "expected_tier": 2,
+    "old_score": 1.13,
+    "old_tier": 2,
+    "new_score": 1.9635,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 3.56,
+      "alignment": 2.87,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "future_ready_graduate",
+      "instructional_framework",
+      "learning_labs",
+      "personalized_learning"
+    ],
+    "tier_match": true,
+    "score_delta": 0.8335
+  },
+  {
+    "nces_id": "4816110",
+    "name": "CYPRESS-FAIRBANKS ISD",
+    "state": "TX",
+    "enrollment": 117927,
+    "expected_tier": 2,
+    "old_score": 1,
+    "old_tier": 1,
+    "new_score": 1.6297,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 4.66,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 24,
+    "keywords_found": [
+      "digital_citizenship",
+      "portrait_of_graduate",
+      "strategic_plan"
+    ],
+    "tier_match": true,
+    "score_delta": 0.6297
+  },
+  {
+    "nces_id": "0407750",
+    "name": "Deer Valley Unified District (4246)",
+    "state": "AZ",
+    "enrollment": 32265,
+    "expected_tier": 2,
+    "old_score": 1,
+    "old_tier": 1,
+    "new_score": 1.2459,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 3.56,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 5,
+    "keywords_found": [
+      "digital_citizenship",
+      "portrait_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": 0.2459
+  },
+  {
+    "nces_id": "2400060",
+    "name": "Anne Arundel County Public Schools",
+    "state": "MD",
+    "enrollment": 85029,
+    "expected_tier": 2,
+    "old_score": 1,
+    "old_tier": 1,
+    "new_score": 0.9071,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 2.59,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 12,
+    "keywords_found": [
+      "portrait_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": -0.0929
+  },
+  {
+    "nces_id": "0623340",
+    "name": "Madera Unified",
+    "state": "CA",
+    "enrollment": 19935,
+    "expected_tier": 2,
+    "old_score": 0.95,
+    "old_tier": 1,
+    "new_score": 1.2979,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 3.71,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 8,
+    "keywords_found": [
+      "future_ready_skills",
+      "graduate_profile"
+    ],
+    "tier_match": true,
+    "score_delta": 0.3479
+  },
+  {
+    "nces_id": "2629940",
+    "name": "Rochester Community School District",
+    "state": "MI",
+    "enrollment": 14868,
+    "expected_tier": 2,
+    "old_score": 0.85,
+    "old_tier": 2,
+    "new_score": 0.9308,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 1.31,
+      "alignment": 0,
+      "activation": 1.89,
+      "branding": 0
+    },
+    "docs_fetched": 6,
+    "keywords_found": [
+      "capstone",
+      "digital_citizenship"
+    ],
+    "tier_match": false,
+    "score_delta": 0.0808
+  },
+  {
+    "nces_id": "2503510",
+    "name": "Chelmsford",
+    "state": "MA",
+    "enrollment": 5068,
+    "expected_tier": 2,
+    "old_score": 0.8,
+    "old_tier": 1,
+    "new_score": 0.596,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 1.7,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "strategic_plan"
+    ],
+    "tier_match": false,
+    "score_delta": -0.204
+  },
+  {
+    "nces_id": "3800405",
+    "name": "WILLISTON BASIN 7",
+    "state": "ND",
+    "enrollment": 5414,
+    "expected_tier": 2,
+    "old_score": 0.8,
+    "old_tier": 1,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 13,
+    "keywords_found": [],
+    "tier_match": false,
+    "score_delta": -0.8
+  },
+  {
+    "nces_id": "2400510",
+    "name": "Prince George's County Public Schools",
+    "state": "MD",
+    "enrollment": 132123,
+    "expected_tier": 2,
+    "old_score": 0.8,
+    "old_tier": 1,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [],
+    "tier_match": false,
+    "score_delta": -0.8
+  },
+  {
+    "nces_id": "5310140",
+    "name": "Yelm School District",
+    "state": "WA",
+    "enrollment": 5671,
+    "expected_tier": 2,
+    "old_score": 0.8,
+    "old_tier": 1,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [],
+    "tier_match": false,
+    "score_delta": -0.8
+  },
+  {
+    "nces_id": "4821780",
+    "name": "GREGORY-PORTLAND ISD",
+    "state": "TX",
+    "enrollment": 5024,
+    "expected_tier": 2,
+    "old_score": 0.74,
+    "old_tier": 2,
+    "new_score": 0.4498,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 1.8,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "learning_framework"
+    ],
+    "tier_match": false,
+    "score_delta": -0.2902
+  },
+  {
+    "nces_id": "5304920",
+    "name": "Mead School District",
+    "state": "WA",
+    "enrollment": 10657,
+    "expected_tier": 2,
+    "old_score": 0.7,
+    "old_tier": 2,
+    "new_score": 0.9754,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 2.79,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 12,
+    "keywords_found": [
+      "listening_sessions",
+      "strategic_priorities"
+    ],
+    "tier_match": true,
+    "score_delta": 0.2754
+  },
+  {
+    "nces_id": "0802340",
+    "name": "Aurora Joint District No. 28 of the counties of Adams and A",
+    "state": "CO",
+    "enrollment": 38702,
+    "expected_tier": 2,
+    "old_score": 0.7,
+    "old_tier": 2,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [],
+    "tier_match": false,
+    "score_delta": -0.7
+  },
+  {
+    "nces_id": "1201110",
+    "name": "LEON",
+    "state": "FL",
+    "enrollment": 31645,
+    "expected_tier": 2,
+    "old_score": 0.64,
+    "old_tier": 2,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [],
+    "tier_match": false,
+    "score_delta": -0.64
+  },
+  {
+    "nces_id": "4703240",
+    "name": "Oak Ridge",
+    "state": "TN",
+    "enrollment": 5078,
+    "expected_tier": 2,
+    "old_score": 0.6,
+    "old_tier": 2,
+    "new_score": 0.9071,
+    "new_tier": 2,
+    "new_category_scores": {
+      "readiness": 2.59,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 15,
+    "keywords_found": [
+      "portrait_of_graduate"
+    ],
+    "tier_match": true,
+    "score_delta": 0.3071
+  },
+  {
+    "nces_id": "3407350",
+    "name": "Hoboken Public School District",
+    "state": "NJ",
+    "enrollment": 3702,
+    "expected_tier": 2,
+    "old_score": 0.4,
+    "old_tier": 2,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 10,
+    "keywords_found": [],
+    "tier_match": false,
+    "score_delta": -0.4
+  },
+  {
+    "nces_id": "1200180",
+    "name": "BROWARD",
+    "state": "FL",
+    "enrollment": 243553,
+    "expected_tier": 2,
+    "old_score": 0.4,
+    "old_tier": 2,
+    "new_score": 0.5274,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 1.51,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [
+      "personalized_learning"
+    ],
+    "tier_match": false,
+    "score_delta": 0.1274
+  },
+  {
+    "nces_id": "1200390",
+    "name": "MIAMI-DADE",
+    "state": "FL",
+    "enrollment": 333233,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 3,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "1200870",
+    "name": "HILLSBOROUGH",
+    "state": "FL",
+    "enrollment": 220360,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "4816230",
+    "name": "DALLAS ISD",
+    "state": "TX",
+    "enrollment": 139802,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0.4287,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 1.22,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 21,
+    "keywords_found": [
+      "personalized_learning"
+    ],
+    "tier_match": true,
+    "score_delta": 0.4287
+  },
+  {
+    "nces_id": "1200480",
+    "name": "DUVAL",
+    "state": "FL",
+    "enrollment": 130054,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 21,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "1301290",
+    "name": "Cobb County",
+    "state": "GA",
+    "enrollment": 105738,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 7,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "0803360",
+    "name": "School District No. 1 in the county of Denver and State of C",
+    "state": "CO",
+    "enrollment": 90471,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 6,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "1201530",
+    "name": "PASCO",
+    "state": "FL",
+    "enrollment": 86627,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 20,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "4800211",
+    "name": "IDEA PUBLIC SCHOOLS",
+    "state": "TX",
+    "enrollment": 79430,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0.4287,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 1.22,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 14,
+    "keywords_found": [
+      "personalized_learning"
+    ],
+    "tier_match": true,
+    "score_delta": 0.4287
+  },
+  {
+    "nces_id": "3701920",
+    "name": "Guilford County Schools",
+    "state": "NC",
+    "enrollment": 67620,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 8,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "0612330",
+    "name": "Elk Grove Unified",
+    "state": "CA",
+    "enrollment": 63421,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "4900360",
+    "name": "Granite District",
+    "state": "UT",
+    "enrollment": 59106,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0.3708,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 1.06,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 20,
+    "keywords_found": [
+      "digital_citizenship"
+    ],
+    "tier_match": true,
+    "score_delta": 0.3708
+  },
+  {
+    "nces_id": "4832940",
+    "name": "NORTH EAST ISD",
+    "state": "TX",
+    "enrollment": 56420,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0.7541,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 2.15,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 24,
+    "keywords_found": [
+      "digital_citizenship",
+      "personalized_learning"
+    ],
+    "tier_match": true,
+    "score_delta": 0.7541
+  },
+  {
+    "nces_id": "4825740",
+    "name": "KLEIN ISD",
+    "state": "TX",
+    "enrollment": 52437,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 16,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "3701500",
+    "name": "Winston Salem / Forsyth County Schools",
+    "state": "NC",
+    "enrollment": 52430,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 9,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "4820340",
+    "name": "GARLAND ISD",
+    "state": "TX",
+    "enrollment": 51021,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 21,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "5101890",
+    "name": "Henrico County Public Schools",
+    "state": "VA",
+    "enrollment": 50915,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 9,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  },
+  {
+    "nces_id": "0102370",
+    "name": "Mobile County",
+    "state": "AL",
+    "enrollment": 49946,
+    "expected_tier": 3,
+    "old_score": 0,
+    "old_tier": 3,
+    "new_score": 0,
+    "new_tier": 3,
+    "new_category_scores": {
+      "readiness": 0,
+      "alignment": 0,
+      "activation": 0,
+      "branding": 0
+    },
+    "docs_fetched": 11,
+    "keywords_found": [],
+    "tier_match": true,
+    "score_delta": 0
+  }
+]

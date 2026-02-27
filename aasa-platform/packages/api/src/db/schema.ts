@@ -458,6 +458,57 @@ export const savedCohortItemsRelations = relations(savedCohortItems, ({ one }) =
 }))
 
 // =============================================================================
+// EVENT UPLOAD LAYER - CSV upload matching and scoring
+// =============================================================================
+
+/**
+ * Event Uploads - Tracks uploaded event attendee lists
+ * Each upload creates one record here, with results in event_upload_results
+ */
+export const eventUploads = pgTable('event_uploads', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull(),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+  rowCount: integer('row_count').notNull(),
+  matchedCount: integer('matched_count').default(0),
+  status: varchar('status', { length: 20 }).notNull().default('processing'), // 'processing', 'completed', 'failed'
+}, (table) => ({
+  userIdIdx: index('idx_event_uploads_user').on(table.userId),
+  statusIdx: index('idx_event_uploads_status').on(table.status),
+}))
+
+/**
+ * Event Upload Results - Individual row match results
+ * Links each input row to a matched district with confidence and scores
+ */
+export const eventUploadResults = pgTable('event_upload_results', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  uploadId: uuid('upload_id').notNull(), // FK to event_uploads
+  rowIndex: integer('row_index').notNull(),
+  inputName: varchar('input_name', { length: 500 }).notNull(),
+  inputState: varchar('input_state', { length: 2 }),
+  matchedDistrictId: varchar('matched_district_id', { length: 20 }), // NCES ID
+  matchConfidence: decimal('match_confidence'), // 0.00 to 1.00
+  districtScore: decimal('district_score'),
+  districtTier: varchar('district_tier', { length: 10 }),
+}, (table) => ({
+  uploadIdIdx: index('idx_event_upload_results_upload').on(table.uploadId),
+  matchedDistrictIdx: index('idx_event_upload_results_district').on(table.matchedDistrictId),
+}))
+
+export const eventUploadsRelations = relations(eventUploads, ({ many }) => ({
+  results: many(eventUploadResults),
+}))
+
+export const eventUploadResultsRelations = relations(eventUploadResults, ({ one }) => ({
+  upload: one(eventUploads, {
+    fields: [eventUploadResults.uploadId],
+    references: [eventUploads.id],
+  }),
+}))
+
+// =============================================================================
 // Type exports - Use with InferSelectModel for type-safe queries
 // =============================================================================
 
@@ -484,3 +535,8 @@ export type SavedSearch = typeof savedSearches.$inferSelect
 export type SavedSearchInsert = typeof savedSearches.$inferInsert
 export type CommandSearchLog = typeof commandSearchLogs.$inferSelect
 export type CommandSearchLogInsert = typeof commandSearchLogs.$inferInsert
+
+export type EventUpload = typeof eventUploads.$inferSelect
+export type EventUploadInsert = typeof eventUploads.$inferInsert
+export type EventUploadResult = typeof eventUploadResults.$inferSelect
+export type EventUploadResultInsert = typeof eventUploadResults.$inferInsert
