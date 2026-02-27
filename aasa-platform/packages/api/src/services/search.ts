@@ -523,6 +523,15 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
         }
       : undefined
 
+  // Extract state codes from prompt for lead-intent queries (e.g., "leads in TX")
+  const US_STATES = new Set(['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'])
+  const promptStates = (prompt.match(/\b[A-Z]{2}\b/g) || [])
+    .filter((code) => US_STATES.has(code))
+  if (promptStates.length > 0 && (!request.leadFilters?.states || request.leadFilters.states.length === 0)) {
+    if (!request.leadFilters) (request as any).leadFilters = {}
+    request.leadFilters!.states = promptStates
+  }
+
   const suppressionDays = request.engagementSignals?.suppressionDays ?? 60
   const nowMs = Date.now()
   const suppressedSet = new Set<string>()
@@ -629,12 +638,24 @@ export async function runCommand(request: CommandRequest): Promise<CommandRespon
       const eligibilityBoost =
         (parsedGrantCriteria?.frplMin && toNumber(row.frpl_percent) >= parsedGrantCriteria.frplMin ? 0.5 : 0) +
         (parsedGrantCriteria?.minorityMin && toNumber(row.minority_percent) >= parsedGrantCriteria.minorityMin ? 0.5 : 0)
-      // Semantic relevance is the PRIMARY ranking signal (query-specific).
-      // Keyword score is a secondary boost (static, same for every query).
-      const semanticScore = (semanticMax * 6) + (semanticAvg * 2) + Math.min(1.5, Math.log10(semanticHits + 1))
-      const keywordBoost = total * 0.5
+
+      // For lead-intent queries, keyword scores are the PRIMARY signal since
+      // the query ("next hottest leads in TX") won't match district document
+      // content semantically. For content queries, semantic similarity leads.
+      let semanticScore: number
+      let keywordBoost: number
+      if (intent === 'next_hottest_uncontacted') {
+        keywordBoost = total * 3
+        semanticScore = (semanticMax * 2) + (semanticAvg * 1) + Math.min(0.5, Math.log10(semanticHits + 1))
+      } else {
+        semanticScore = (semanticMax * 6) + (semanticAvg * 2) + Math.min(1.5, Math.log10(semanticHits + 1))
+        keywordBoost = total * 0.5
+      }
       const composite = Math.max(0, semanticScore + keywordBoost + eligibilityBoost - engagementPenalty)
-      const confidence = Math.min(0.98, Math.max(0.2, (composite + semanticAvg * 2) / 12))
+      // For lead-intent, confidence derives from keyword scores (denominator 8).
+      // For content queries, confidence derives from semantic match (denominator 12).
+      const confidenceDivisor = intent === 'next_hottest_uncontacted' ? 8 : 12
+      const confidence = Math.min(0.98, Math.max(0.2, (composite + semanticAvg * 2) / confidenceDivisor))
       const confidenceBand = toConfidenceBand(confidence)
       const sourceExcerpts: Array<{ documentUrl?: string | null; keyword: string; excerpt: string }> = []
       const keywordMatches = (row.keyword_matches || {}) as Record<string, any[]>
