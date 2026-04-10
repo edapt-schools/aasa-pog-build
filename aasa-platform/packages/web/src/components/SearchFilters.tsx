@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
-import { X, FileText, Calendar, MapPin } from 'lucide-react'
+import { X, FileText, Calendar, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import type { SearchFilters as SearchFiltersType } from '@aasa-platform/shared'
 
 interface SearchFiltersProps {
@@ -24,14 +24,20 @@ const DOCUMENT_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
-// US States (abbreviated)
-const US_STATES = [
-  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC'
-]
+// US States with full names
+const US_STATES: Record<string, string> = {
+  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
+  CO: 'Colorado', CT: 'Connecticut', DC: 'District of Columbia', DE: 'Delaware',
+  FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois',
+  IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana',
+  ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota',
+  MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada',
+  NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York',
+  NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon',
+  PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota',
+  TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia',
+  WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+}
 
 function FilterSection({ children }: { children: React.ReactNode }) {
   return (
@@ -43,10 +49,10 @@ function FilterSection({ children }: { children: React.ReactNode }) {
 
 function SectionLabel({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
-    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5 flex items-center gap-2">
-      <Icon className="w-3.5 h-3.5 text-accent/70" />
+    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+      <Icon className="w-3.5 h-3.5 text-accent/70 shrink-0" />
       {children}
-    </Label>
+    </div>
   )
 }
 
@@ -56,6 +62,16 @@ function SectionLabel({ icon: Icon, children }: { icon: React.ComponentType<{ cl
  */
 export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
   const [localFilters, setLocalFilters] = useState<SearchFiltersType>(filters)
+  const [stateDropdownOpen, setStateDropdownOpen] = useState(false)
+  const [stateSearch, setStateSearch] = useState('')
+
+  const filteredStates = useMemo(() => {
+    if (!stateSearch) return Object.entries(US_STATES)
+    const q = stateSearch.toLowerCase()
+    return Object.entries(US_STATES).filter(
+      ([code, name]) => code.toLowerCase().includes(q) || name.toLowerCase().includes(q)
+    )
+  }, [stateSearch])
 
   // Handle document type toggle
   const handleDocumentTypeChange = (type: string, checked: boolean) => {
@@ -188,19 +204,73 @@ export function SearchFilters({ filters, onChange }: SearchFiltersProps) {
       {/* State Filter */}
       <FilterSection>
         <SectionLabel icon={MapPin}>State</SectionLabel>
-        <select
-          id="state"
-          value={localFilters.state || ''}
-          onChange={(e) => handleStateChange(e.target.value)}
-          className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground text-sm hover:bg-muted/50 transition-colors"
+        <button
+          type="button"
+          onClick={() => setStateDropdownOpen(!stateDropdownOpen)}
+          className="w-full flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors"
         >
-          <option value="">All States</option>
-          {US_STATES.map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
+          <span className={localFilters.state ? 'text-foreground' : 'text-muted-foreground'}>
+            {localFilters.state ? `${localFilters.state} — ${US_STATES[localFilters.state]}` : 'All States'}
+          </span>
+          {stateDropdownOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {stateDropdownOpen && (
+          <div className="mt-1.5 border border-border rounded-lg bg-background shadow-lg overflow-hidden">
+            <div className="p-2">
+              <Input
+                type="text"
+                placeholder="Search states..."
+                value={stateSearch}
+                onChange={(e) => setStateSearch(e.target.value)}
+                className="text-sm"
+                autoFocus
+              />
+            </div>
+            <div className="max-h-52 overflow-y-auto px-1 pb-1">
+              {/* All States option */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleStateChange('')
+                  setStateDropdownOpen(false)
+                  setStateSearch('')
+                }}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-left transition-colors ${
+                  !localFilters.state
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'text-foreground hover:bg-muted'
+                }`}
+              >
+                <span className="flex-1">All States</span>
+                {!localFilters.state && <span className="text-accent text-xs">✓</span>}
+              </button>
+              {filteredStates.map(([code, name]) => {
+                const isSelected = localFilters.state === code
+                return (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => {
+                      handleStateChange(code)
+                      setStateDropdownOpen(false)
+                      setStateSearch('')
+                    }}
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-left transition-colors ${
+                      isSelected
+                        ? 'bg-accent/10 text-accent font-medium'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <span className="w-7 text-xs text-muted-foreground font-mono">{code}</span>
+                    <span className="flex-1">{name}</span>
+                    {isSelected && <span className="text-accent text-xs">✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </FilterSection>
 
       {/* Active filter chips */}
