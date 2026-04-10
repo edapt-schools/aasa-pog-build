@@ -52,10 +52,10 @@ function FilterSection({ children, className = '' }: { children: React.ReactNode
 
 function SectionLabel({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
-    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5 flex items-center gap-2">
-      <Icon className="w-3.5 h-3.5 text-accent/70" />
+    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+      <Icon className="w-3.5 h-3.5 text-accent/70 shrink-0" />
       {children}
-    </label>
+    </div>
   )
 }
 
