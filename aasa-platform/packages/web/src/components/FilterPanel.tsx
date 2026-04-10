@@ -12,6 +12,7 @@ import {
   Users,
   Percent,
   Signal,
+  UserCheck,
 } from 'lucide-react'
 import type { ListDistrictsParams } from '@aasa-platform/shared'
 
@@ -40,6 +41,23 @@ const LOCALE_TYPES = [
   { value: 'town', label: 'Town' },
   { value: 'rural', label: 'Rural' },
 ]
+
+function FilterSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`pb-5 border-b border-border/60 last:border-b-0 last:pb-0 ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+function SectionLabel({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
+  return (
+    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5 flex items-center gap-2">
+      <Icon className="w-3.5 h-3.5 text-accent/70" />
+      {children}
+    </label>
+  )
+}
 
 export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelProps) {
   const [stateSearch, setStateSearch] = useState('')
@@ -98,23 +116,28 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
   }
 
   return (
-    <div>
+    <div className="bg-muted/30 rounded-xl p-5 border border-border/50">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-foreground">
-          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+      <div className="flex items-center justify-between mb-5 pb-4 border-b border-border/60">
+        <h3 className="text-base font-semibold text-foreground">
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-accent-foreground text-xs font-bold">
+              {activeFilterCount}
+            </span>
+          )}
         </h3>
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={onReset}>Reset</Button>
+          <Button variant="ghost" size="sm" onClick={onReset} className="text-xs h-7 text-muted-foreground hover:text-foreground">
+            Reset
+          </Button>
         )}
       </div>
 
-      <div className="space-y-6">
-        {/* ── Search ──────────────────────────────────────── */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-            <Search className="w-4 h-4 text-muted-foreground" /> Search
-          </label>
+      <div className="space-y-5">
+        {/* Search */}
+        <FilterSection>
+          <SectionLabel icon={Search}>Search</SectionLabel>
           <div className="flex gap-2">
             <Input
               type="text"
@@ -127,7 +150,7 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
                   commitSearch()
                 }
               }}
-              className="flex-1"
+              className="flex-1 text-sm"
             />
             <Button
               variant="default"
@@ -139,16 +162,16 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
               <Search className="w-4 h-4" />
             </Button>
           </div>
-        </div>
+        </FilterSection>
 
-        {/* ── State (searchable dropdown) ──────────────────── */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-muted-foreground" /> State
+        {/* State */}
+        <FilterSection>
+          <SectionLabel icon={MapPin}>
+            State
             {filters.state && filters.state.length > 0 && (
-              <span className="text-xs text-muted-foreground">({filters.state.length})</span>
+              <span className="text-accent text-[10px] font-bold ml-1">({filters.state.length})</span>
             )}
-          </label>
+          </SectionLabel>
           <button
             type="button"
             onClick={() => setStateDropdownOpen(!stateDropdownOpen)}
@@ -214,13 +237,11 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
               )}
             </div>
           )}
-        </div>
+        </FilterSection>
 
-        {/* ── Outreach Tier ────────────────────────────────── */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-            <Signal className="w-4 h-4 text-muted-foreground" /> Outreach Tier
-          </label>
+        {/* Outreach Tier */}
+        <FilterSection>
+          <SectionLabel icon={Signal}>Outreach Tier</SectionLabel>
           <div className="flex gap-2">
             {(['tier1', 'tier2', 'tier3'] as const).map((tier) => {
               const isSelected = filters.outreachTier?.includes(tier) || false
@@ -247,13 +268,11 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
               )
             })}
           </div>
-        </div>
+        </FilterSection>
 
-        {/* ── Enrollment Range ─────────────────────────────── */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-            <Users className="w-4 h-4 text-muted-foreground" /> Enrollment
-          </label>
+        {/* Enrollment */}
+        <FilterSection>
+          <SectionLabel icon={Users}>Enrollment</SectionLabel>
           <div className="flex gap-2 items-center">
             <Input
               type="number"
@@ -267,7 +286,7 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
               }
               className="text-sm"
             />
-            <span className="text-muted-foreground text-sm shrink-0">to</span>
+            <span className="text-muted-foreground text-xs shrink-0">to</span>
             <Input
               type="number"
               placeholder="Max"
@@ -281,122 +300,116 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
               className="text-sm"
             />
           </div>
-        </div>
+        </FilterSection>
 
-        {/* ── Demographics ─────────────────────────────────── */}
-        <div className="space-y-4">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Demographics
-          </h4>
-
-          {/* FRPL % */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-              <Percent className="w-4 h-4 text-muted-foreground" /> Free/Reduced Lunch
-            </label>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="number"
-                placeholder="Min %"
-                min={0}
-                max={100}
-                value={filters.frplMin ?? ''}
-                onChange={(e) =>
-                  onFilterChange({
-                    ...filters,
-                    frplMin: e.target.value ? parseInt(e.target.value) : undefined,
-                  })
-                }
-                className="text-sm"
-              />
-              <span className="text-muted-foreground text-sm shrink-0">to</span>
-              <Input
-                type="number"
-                placeholder="Max %"
-                min={0}
-                max={100}
-                value={filters.frplMax ?? ''}
-                onChange={(e) =>
-                  onFilterChange({
-                    ...filters,
-                    frplMax: e.target.value ? parseInt(e.target.value) : undefined,
-                  })
-                }
-                className="text-sm"
-              />
-            </div>
+        {/* Demographics group */}
+        <FilterSection>
+          <div className="mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-accent/60">Demographics</span>
           </div>
 
-          {/* Minority % */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-              <Percent className="w-4 h-4 text-muted-foreground" /> Minority Enrollment
-            </label>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="number"
-                placeholder="Min %"
-                min={0}
-                max={100}
-                value={filters.minorityMin ?? ''}
-                onChange={(e) =>
-                  onFilterChange({
-                    ...filters,
-                    minorityMin: e.target.value ? parseInt(e.target.value) : undefined,
-                  })
-                }
-                className="text-sm"
-              />
-              <span className="text-muted-foreground text-sm shrink-0">to</span>
-              <Input
-                type="number"
-                placeholder="Max %"
-                min={0}
-                max={100}
-                value={filters.minorityMax ?? ''}
-                onChange={(e) =>
-                  onFilterChange({
-                    ...filters,
-                    minorityMax: e.target.value ? parseInt(e.target.value) : undefined,
-                  })
-                }
-                className="text-sm"
-              />
+          <div className="space-y-4">
+            {/* FRPL % */}
+            <div>
+              <SectionLabel icon={Percent}>Free/Reduced Lunch</SectionLabel>
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="number"
+                  placeholder="Min %"
+                  min={0}
+                  max={100}
+                  value={filters.frplMin ?? ''}
+                  onChange={(e) =>
+                    onFilterChange({
+                      ...filters,
+                      frplMin: e.target.value ? parseInt(e.target.value) : undefined,
+                    })
+                  }
+                  className="text-sm"
+                />
+                <span className="text-muted-foreground text-xs shrink-0">to</span>
+                <Input
+                  type="number"
+                  placeholder="Max %"
+                  min={0}
+                  max={100}
+                  value={filters.frplMax ?? ''}
+                  onChange={(e) =>
+                    onFilterChange({
+                      ...filters,
+                      frplMax: e.target.value ? parseInt(e.target.value) : undefined,
+                    })
+                  }
+                  className="text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Minority % */}
+            <div>
+              <SectionLabel icon={Percent}>Minority Enrollment</SectionLabel>
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="number"
+                  placeholder="Min %"
+                  min={0}
+                  max={100}
+                  value={filters.minorityMin ?? ''}
+                  onChange={(e) =>
+                    onFilterChange({
+                      ...filters,
+                      minorityMin: e.target.value ? parseInt(e.target.value) : undefined,
+                    })
+                  }
+                  className="text-sm"
+                />
+                <span className="text-muted-foreground text-xs shrink-0">to</span>
+                <Input
+                  type="number"
+                  placeholder="Max %"
+                  min={0}
+                  max={100}
+                  value={filters.minorityMax ?? ''}
+                  onChange={(e) =>
+                    onFilterChange({
+                      ...filters,
+                      minorityMax: e.target.value ? parseInt(e.target.value) : undefined,
+                    })
+                  }
+                  className="text-sm"
+                />
+              </div>
             </div>
           </div>
+        </FilterSection>
 
-          {/* Locale Type */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-muted-foreground" /> Locale
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {LOCALE_TYPES.map(({ value, label }) => {
-                const isSelected = filters.localeType?.includes(value) || false
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => toggleLocale(value)}
-                    className={`flex items-center justify-center px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                      isSelected
-                        ? 'bg-accent/10 border-accent/30 text-accent'
-                        : 'bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
+        {/* Locale Type */}
+        <FilterSection>
+          <SectionLabel icon={Building2}>Locale</SectionLabel>
+          <div className="grid grid-cols-2 gap-2">
+            {LOCALE_TYPES.map(({ value, label }) => {
+              const isSelected = filters.localeType?.includes(value) || false
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => toggleLocale(value)}
+                  className={`flex items-center justify-center px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    isSelected
+                      ? 'bg-accent/10 border-accent/30 text-accent'
+                      : 'bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
-        </div>
+        </FilterSection>
 
-        {/* ── Superintendent filter ────────────────────────── */}
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Superintendent Data
-          </label>
+        {/* Superintendent filter */}
+        <FilterSection>
+          <SectionLabel icon={UserCheck}>Superintendent Data</SectionLabel>
           <div className="flex gap-2">
             <Button
               variant={filters.hasSuperintendent === true ? 'default' : 'outline'}
@@ -425,15 +438,15 @@ export function FilterPanel({ filters, onFilterChange, onReset }: FilterPanelPro
               Missing Contact
             </Button>
           </div>
-        </div>
+        </FilterSection>
 
-        {/* ── Active Filters Chips ─────────────────────────── */}
+        {/* Active Filters Chips */}
         {hasActiveFilters && (
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+          <div className="pt-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-accent/60 mb-2 block">
               Active Filters
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {filters.search && (
                 <Badge
                   variant="secondary"
